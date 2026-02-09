@@ -68,16 +68,7 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-20">
-        <button
-          onClick={scrollToPresentation}
-          className="p-3 rounded-full bg-white/80 backdrop-blur-sm border-2 border-black/20 hover:border-black hover:bg-black/5 transition-all duration-200 shadow-lg"
-          aria-label="Défiler vers le bas"
-        >
-          <ArrowDown className="w-5 h-5 text-black/60" />
-        </button>
-      </div>
+     
     </section>
   );
 };

@@ -28,7 +28,7 @@ const TeamSection = () => {
       <div className="container-narrow">
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-12 lg:gap-16 items-stretch">
           {/* Left side - Content */}
-          <div className="order-2 lg:order-1 flex flex-col">
+          <div className="order-1 lg:order-1 flex flex-col">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-6">
               Notre équipe
             </h2>
@@ -66,7 +66,7 @@ const TeamSection = () => {
           </div>
 
           {/* Right side - Photo */}
-          <div className="order-1 lg:order-2">
+          <div className="order-2 lg:order-2">
             <div className="relative rounded-2xl overflow-hidden shadow-xl h-full min-h-[400px] lg:min-h-[500px] bg-card flex items-center justify-center p-4">
               <img 
                 src={teamPhoto} 
