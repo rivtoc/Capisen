@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2023"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],  // Ajout DOM pour React
     "module": "ESNext",
     "skipLibCheck": true,
 
@@ -11,12 +11,16 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
+    "jsx": "react-jsx",  // Pour React/TSX
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    
+    /* Types */
+    "types": ["@vercel/node"]  // Pour les types Vercel
   },
-  "include": ["vite.config.ts"]
+  "include": ["src", "api", "vite.config.ts"]  // Ajout de src et api
 }

@@ -53,7 +53,7 @@ const ContactSection = () => {
     try {
       // En dev : proxy Vite vers le serveur. En prod : définir VITE_API_URL (ex. https://votresite.com).
       const apiBase = import.meta.env.VITE_API_URL ?? '';
-      const response = await fetch(`${apiBase}/api/contact`, {
+      const response = await fetch('/api/contact', {  // ← Pas de VITE_API_URL
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
