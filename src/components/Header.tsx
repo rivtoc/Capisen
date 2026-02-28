@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-capisen.png";
 
 const Header = () => {
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -62,6 +64,12 @@ const Header = () => {
             className="px-5 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
           >
             Nous contacter
+          </button>
+          <button
+            onClick={() => navigate("/login")}
+            className="px-5 py-2.5 bg-transparent text-primary border border-primary text-sm font-medium rounded-lg hover:bg-primary/10 transition-colors"
+          >
+            Espace membres
           </button>
         </nav>
 
