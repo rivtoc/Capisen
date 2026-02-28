@@ -1,25 +1,83 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo-capisen.png";
+import Sidebar from "@/components/dashboard/Sidebar";
+import MailCompose from "@/components/dashboard/mails/MailCompose";
+import MailContacts from "@/components/dashboard/mails/MailContacts";
+import MailTemplates from "@/components/dashboard/mails/MailTemplates";
+import MailOffres from "@/components/dashboard/mails/MailOffres";
+import MailHistory from "@/components/dashboard/mails/MailHistory";
 
 const Dashboard = () => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const [activeView, setActiveView] = useState("home");
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
+  const renderContent = () => {
+    switch (activeView) {
+      case "mails/compose":
+        return <MailCompose />;
+      case "mails/contacts":
+        return <MailContacts />;
+      case "mails/templates":
+        return <MailTemplates />;
+      case "mails/offres":
+        return <MailOffres />;
+      case "mails/history":
+        return <MailHistory />;
+      case "formations":
+        return (
+          <div className="flex items-center justify-center h-64 text-muted-foreground">
+            <div className="text-center">
+              <p className="text-lg font-medium mb-2">Formations</p>
+              <p className="text-sm">Cette section est en cours de développement.</p>
+            </div>
+          </div>
+        );
+      case "settings":
+        return (
+          <div className="flex items-center justify-center h-64 text-muted-foreground">
+            <div className="text-center">
+              <p className="text-lg font-medium mb-2">Paramètres</p>
+              <p className="text-sm">Cette section est en cours de développement.</p>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="p-8">
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              Bienvenue{profile?.full_name ? `, ${profile.full_name}` : ""} 👋
+            </h1>
+            <p className="text-muted-foreground mb-8">
+              Pôle <strong>{profile?.pole}</strong> · Rôle <strong>{profile?.role}</strong>
+            </p>
+            <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-muted-foreground">
+              <p className="text-lg font-medium mb-2">Tableau de bord CAPISEN</p>
+              <p className="text-sm">Sélectionnez une fonctionnalité dans le menu à gauche.</p>
+            </div>
+          </div>
+        );
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-100 via-gray-50 to-white">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <a href="/">
+      <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between z-10 sticky top-0">
+        <button onClick={() => setActiveView("home")}>
           <img src={logo} alt="CAPISEN" className="h-8 w-auto" />
-        </a>
+        </button>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">{user?.email}</span>
+          <span className="text-sm text-muted-foreground">
+            {profile?.full_name ?? user?.email}
+          </span>
           <button
             onClick={handleSignOut}
             className="px-4 py-2 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -29,21 +87,13 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Contenu */}
-      <main className="max-w-4xl mx-auto px-6 py-16">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
-          Bienvenue dans l'espace membres
-        </h1>
-        <p className="text-muted-foreground mb-10">
-          Connecté en tant que <strong>{user?.email}</strong>
-        </p>
-
-        {/* Placeholder — à compléter */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-muted-foreground">
-          <p className="text-lg font-medium mb-2">Tableau de bord en construction</p>
-          <p className="text-sm">Les formations et fonctionnalités arrivent bientôt.</p>
-        </div>
-      </main>
+      {/* Main layout */}
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar activeView={activeView} setActiveView={setActiveView} profile={profile} />
+        <main className="flex-1 overflow-auto">
+          {renderContent()}
+        </main>
+      </div>
     </div>
   );
 };
