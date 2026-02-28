@@ -22,6 +22,7 @@ interface GenerateMailBody {
   template: TemplateInfo;
   offres: OffreInfo[];
   context: string;
+  mentionedContacts?: ContactInfo[];
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -44,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: "Clé API Anthropic non configurée." });
   }
 
-  const { contact, template, offres, context } = req.body as GenerateMailBody;
+  const { contact, template, offres, context, mentionedContacts } = req.body as GenerateMailBody;
 
   if (!contact || !template) {
     return res.status(400).json({ error: "Contact et template sont requis." });
@@ -57,9 +58,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .join("\n")
       : "Aucune offre sélectionnée.";
 
+  const mentionedText =
+    mentionedContacts && mentionedContacts.length > 0
+      ? mentionedContacts
+          .map((c) => {
+            const parts = [`- ${c.full_name}`];
+            if (c.job_title) parts.push(`Poste : ${c.job_title}`);
+            if (c.company) parts.push(`Entreprise : ${c.company}`);
+            if (c.email) parts.push(`Email : ${c.email}`);
+            return parts.join(", ");
+          })
+          .join("\n")
+      : null;
+
   const prompt = `Tu es chargé de rédiger un mail professionnel au nom de Capisen, la Junior-Entreprise de l'ISEN Brest.
 
-**Informations sur le contact :**
+**Informations sur le contact destinataire :**
 - Nom : ${contact.full_name}
 - Entreprise : ${contact.company ?? "Non renseignée"}
 - Poste : ${contact.job_title ?? "Non renseigné"}
@@ -73,6 +87,7 @@ ${offresText}
 
 **Contexte supplémentaire :**
 ${context || "Aucun contexte supplémentaire."}
+${mentionedText ? `\n**Profils des personnes mentionnées dans le contexte :**\n${mentionedText}\n(Utilise ces informations si elles sont pertinentes pour personnaliser le mail.)` : ""}
 
 Rédige maintenant le mail complet, bien structuré, avec :
 1. L'objet du mail (préfixé par "Objet : ")

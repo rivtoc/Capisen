@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, Upload, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface Contact {
   id: string;
@@ -14,6 +14,13 @@ interface Contact {
 
 type ContactForm = Omit<Contact, "id">;
 
+type ParsedContact = ContactForm;
+
+interface ImportResult {
+  imported: number;
+  skipped: number;
+}
+
 const emptyForm: ContactForm = {
   full_name: "",
   company: null,
@@ -23,6 +30,67 @@ const emptyForm: ContactForm = {
   notes: null,
 };
 
+// Parseur CSV simple gérant les champs entre guillemets
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') {
+      inQuotes = !inQuotes;
+    } else if (line[i] === "," && !inQuotes) {
+      result.push(current.trim());
+      current = "";
+    } else {
+      current += line[i];
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function parseLinkedInCSV(text: string): ParsedContact[] {
+  const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
+
+  // LinkedIn peut avoir des lignes de métadonnées avant les headers — on cherche la ligne header
+  const headerIdx = lines.findIndex((l) =>
+    l.toLowerCase().includes("first name") || l.toLowerCase().includes("firstname")
+  );
+  if (headerIdx === -1) return [];
+
+  const headers = parseCSVLine(lines[headerIdx]).map((h) => h.replace(/^"|"$/g, "").toLowerCase());
+
+  const idx = {
+    firstName: headers.findIndex((h) => h.includes("first name") || h === "firstname"),
+    lastName: headers.findIndex((h) => h.includes("last name") || h === "lastname"),
+    url: headers.findIndex((h) => h === "url" || h.includes("linkedin")),
+    email: headers.findIndex((h) => h.includes("email")),
+    company: headers.findIndex((h) => h.includes("company")),
+    position: headers.findIndex((h) => h.includes("position") || h.includes("title")),
+  };
+
+  const contacts: ParsedContact[] = [];
+
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    const cols = parseCSVLine(lines[i]).map((c) => c.replace(/^"|"$/g, "").trim());
+    const firstName = idx.firstName >= 0 ? cols[idx.firstName] ?? "" : "";
+    const lastName = idx.lastName >= 0 ? cols[idx.lastName] ?? "" : "";
+    const fullName = [firstName, lastName].filter(Boolean).join(" ");
+    if (!fullName) continue;
+
+    contacts.push({
+      full_name: fullName,
+      email: idx.email >= 0 && cols[idx.email] ? cols[idx.email] : null,
+      company: idx.company >= 0 && cols[idx.company] ? cols[idx.company] : null,
+      job_title: idx.position >= 0 && cols[idx.position] ? cols[idx.position] : null,
+      linkedin_url: idx.url >= 0 && cols[idx.url] ? cols[idx.url] : null,
+      notes: null,
+    });
+  }
+
+  return contacts;
+}
+
 const MailContacts = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +99,13 @@ const MailContacts = () => {
   const [form, setForm] = useState<ContactForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Import CSV
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [parsedContacts, setParsedContacts] = useState<ParsedContact[] | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   const fetchContacts = async () => {
     const { data } = await supabase.from("contacts").select("*").order("full_name");
@@ -87,6 +162,62 @@ const MailContacts = () => {
     setContacts((prev) => prev.filter((c) => c.id !== id));
   };
 
+  // --- Import CSV ---
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setParseError(null);
+    setImportResult(null);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const parsed = parseLinkedInCSV(text);
+      if (parsed.length === 0) {
+        setParseError("Aucun contact trouvé. Vérifie que le fichier est bien un export LinkedIn (Connections).");
+      } else {
+        setParsedContacts(parsed);
+      }
+    };
+    reader.readAsText(file, "UTF-8");
+    // Reset l'input pour permettre de re-sélectionner le même fichier
+    e.target.value = "";
+  };
+
+  const handleImport = async () => {
+    if (!parsedContacts) return;
+    setImporting(true);
+
+    // On insère par batch de 50
+    let imported = 0;
+    let skipped = 0;
+    const chunks = [];
+    for (let i = 0; i < parsedContacts.length; i += 50) {
+      chunks.push(parsedContacts.slice(i, i + 50));
+    }
+
+    for (const chunk of chunks) {
+      const { error: e, data } = await supabase.from("contacts").insert(chunk).select();
+      if (e) {
+        skipped += chunk.length;
+      } else {
+        imported += data?.length ?? 0;
+      }
+    }
+
+    await fetchContacts();
+    setImportResult({ imported, skipped });
+    setParsedContacts(null);
+    setImporting(false);
+  };
+
+  const cancelImport = () => {
+    setParsedContacts(null);
+    setParseError(null);
+    setImportResult(null);
+  };
+
   const fields: { key: keyof ContactForm; label: string; placeholder: string }[] = [
     { key: "full_name", label: "Nom complet *", placeholder: "Jean Dupont" },
     { key: "company", label: "Entreprise", placeholder: "Acme Corp" },
@@ -102,15 +233,122 @@ const MailContacts = () => {
           <h2 className="text-xl font-bold text-foreground mb-1">Contacts</h2>
           <p className="text-sm text-muted-foreground">Gérez vos contacts prospects et clients.</p>
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
-        >
-          <Plus size={16} />
-          Nouveau contact
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <Upload size={16} />
+            Importer LinkedIn CSV
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
+          >
+            <Plus size={16} />
+            Nouveau contact
+          </button>
+        </div>
       </div>
 
+      {/* Erreur de parsing */}
+      {parseError && (
+        <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-2xl px-5 py-4 mb-6">
+          <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-700">Fichier non reconnu</p>
+            <p className="text-sm text-red-600 mt-0.5">{parseError}</p>
+          </div>
+          <button onClick={cancelImport}><X size={16} className="text-red-400 hover:text-red-600" /></button>
+        </div>
+      )}
+
+      {/* Résultat import */}
+      {importResult && (
+        <div className="flex items-start gap-3 bg-green-50 border border-green-100 rounded-2xl px-5 py-4 mb-6">
+          <CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-green-700">Import terminé</p>
+            <p className="text-sm text-green-600 mt-0.5">
+              {importResult.imported} contact{importResult.imported !== 1 ? "s" : ""} importé{importResult.imported !== 1 ? "s" : ""}
+              {importResult.skipped > 0 && `, ${importResult.skipped} ignoré${importResult.skipped !== 1 ? "s" : ""}`}.
+            </p>
+          </div>
+          <button onClick={cancelImport}><X size={16} className="text-green-400 hover:text-green-600" /></button>
+        </div>
+      )}
+
+      {/* Aperçu avant import */}
+      {parsedContacts && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                {parsedContacts.length} contact{parsedContacts.length !== 1 ? "s" : ""} détecté{parsedContacts.length !== 1 ? "s" : ""}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Vérifiez avant d'importer.</p>
+            </div>
+            <button onClick={cancelImport}>
+              <X size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
+            </button>
+          </div>
+
+          {/* Aperçu des 5 premiers */}
+          <div className="border border-gray-100 rounded-xl overflow-hidden mb-4">
+            <table className="w-full text-xs">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium text-foreground">Nom</th>
+                  <th className="text-left px-3 py-2 font-medium text-foreground">Entreprise</th>
+                  <th className="text-left px-3 py-2 font-medium text-foreground">Poste</th>
+                  <th className="text-left px-3 py-2 font-medium text-foreground">Email</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {parsedContacts.slice(0, 5).map((c, i) => (
+                  <tr key={i} className="bg-white">
+                    <td className="px-3 py-2 font-medium text-foreground">{c.full_name}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{c.company ?? "—"}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{c.job_title ?? "—"}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{c.email ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {parsedContacts.length > 5 && (
+              <p className="text-xs text-center text-muted-foreground py-2 bg-gray-50 border-t border-gray-100">
+                … et {parsedContacts.length - 5} autre{parsedContacts.length - 5 !== 1 ? "s" : ""}
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleImport}
+              disabled={importing}
+              className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            >
+              {importing && <Loader2 size={14} className="animate-spin" />}
+              {importing ? "Import en cours…" : `Importer ${parsedContacts.length} contact${parsedContacts.length !== 1 ? "s" : ""}`}
+            </button>
+            <button
+              onClick={cancelImport}
+              className="px-4 py-2 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Formulaire ajout/édition manuel */}
       {showForm && (
         <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -169,11 +407,12 @@ const MailContacts = () => {
         </div>
       )}
 
+      {/* Liste des contacts */}
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : contacts.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
-          <p className="text-sm">Aucun contact pour l'instant. Ajoutez-en un !</p>
+          <p className="text-sm">Aucun contact pour l'instant. Ajoutez-en un ou importez depuis LinkedIn.</p>
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">

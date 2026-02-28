@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wand2, Loader2, Copy, Check, Save } from "lucide-react";
+import { Wand2, Loader2, Copy, Check, Save, X, Search, UserPlus } from "lucide-react";
 
 interface Contact {
   id: string;
@@ -15,6 +15,7 @@ interface Template {
   id: string;
   title: string;
   context: string | null;
+  mentioned_contact_ids?: string[] | null;
 }
 
 interface Offre {
@@ -28,10 +29,18 @@ const MailCompose = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [offres, setOffres] = useState<Offre[]>([]);
+
   const [selectedContact, setSelectedContact] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [selectedOffres, setSelectedOffres] = useState<string[]>([]);
   const [context, setContext] = useState("");
+
+  // Contacts mentionnés dans le contexte
+  const [mentionedContacts, setMentionedContacts] = useState<Contact[]>([]);
+  const [mentionSearch, setMentionSearch] = useState("");
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const mentionRef = useRef<HTMLDivElement>(null);
+
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -41,8 +50,20 @@ const MailCompose = () => {
 
   useEffect(() => {
     supabase.from("contacts").select("id, full_name, company, job_title, email").order("full_name").then(({ data }) => setContacts(data ?? []));
-    supabase.from("mail_templates").select("id, title, context").order("title").then(({ data }) => setTemplates(data ?? []));
+    supabase.from("mail_templates").select("id, title, context, mentioned_contact_ids").order("title").then(({ data }) => setTemplates(data ?? []));
     supabase.from("offres_prestation").select("id, title, description").order("title").then(({ data }) => setOffres(data ?? []));
+  }, []);
+
+  // Fermer le dropdown si clic en dehors
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (mentionRef.current && !mentionRef.current.contains(e.target as Node)) {
+        setShowMentionDropdown(false);
+        setMentionSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   if (profile?.role !== "presidence") {
@@ -62,6 +83,34 @@ const MailCompose = () => {
     );
   };
 
+  // --- Contacts mentionnés ---
+  // Auto-charger les contacts liés quand un template est sélectionné
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    const template = templates.find((t) => t.id === templateId);
+    if (template?.mentioned_contact_ids?.length) {
+      const linked = contacts.filter((c) => template.mentioned_contact_ids!.includes(c.id));
+      setMentionedContacts(linked);
+    }
+  };
+
+  const mentionSuggestions = contacts.filter(
+    (c) =>
+      !mentionedContacts.find((m) => m.id === c.id) &&
+      c.full_name.toLowerCase().includes(mentionSearch.toLowerCase())
+  );
+
+  const addMentionedContact = (c: Contact) => {
+    setMentionedContacts((prev) => [...prev, c]);
+    setMentionSearch("");
+    setShowMentionDropdown(false);
+  };
+
+  const removeMentionedContact = (id: string) => {
+    setMentionedContacts((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  // --- Génération ---
   const handleGenerate = async () => {
     if (!selectedContact || !selectedTemplate) {
       setError("Sélectionne un contact et un template.");
@@ -80,7 +129,13 @@ const MailCompose = () => {
       const res = await fetch("/api/generate-mail", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contact, template, offres: chosenOffres, context }),
+        body: JSON.stringify({
+          contact,
+          template,
+          offres: chosenOffres,
+          context,
+          mentionedContacts,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erreur inconnue");
@@ -122,9 +177,9 @@ const MailCompose = () => {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Contact */}
+        {/* Contact destinataire */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-foreground">Contact *</label>
+          <label className="text-sm font-medium text-foreground">Contact destinataire *</label>
           <select
             value={selectedContact}
             onChange={(e) => setSelectedContact(e.target.value)}
@@ -144,7 +199,7 @@ const MailCompose = () => {
           <label className="text-sm font-medium text-foreground">Template *</label>
           <select
             value={selectedTemplate}
-            onChange={(e) => setSelectedTemplate(e.target.value)}
+            onChange={(e) => handleTemplateChange(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition appearance-none"
           >
             <option value="">Sélectionne un template…</option>
@@ -192,6 +247,88 @@ const MailCompose = () => {
           placeholder="Ex : Je les ai rencontrés au forum Brest Avenir, ils cherchent un prestataire pour une refonte web…"
           className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
         />
+      </div>
+
+      {/* Personnes mentionnées */}
+      <div className="mb-8 flex flex-col gap-2">
+        <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
+          <UserPlus size={14} />
+          Personnes mentionnées{" "}
+          <span className="text-muted-foreground font-normal">(optionnel)</span>
+        </label>
+        <p className="text-xs text-muted-foreground -mt-1">
+          Lie un contact à un nom que tu mentionnes dans le contexte — l'IA recevra son profil complet.
+        </p>
+
+        {/* Tags des contacts sélectionnés */}
+        {mentionedContacts.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-1">
+            {mentionedContacts.map((c) => (
+              <span
+                key={c.id}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-foreground text-sm rounded-lg"
+              >
+                <span className="font-medium">{c.full_name}</span>
+                {c.company && (
+                  <span className="text-muted-foreground text-xs">— {c.company}</span>
+                )}
+                <button
+                  onClick={() => removeMentionedContact(c.id)}
+                  className="ml-1 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Champ de recherche avec dropdown */}
+        <div ref={mentionRef} className="relative">
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-black/10 focus-within:border-black transition">
+            <Search size={14} className="text-muted-foreground shrink-0" />
+            <input
+              type="text"
+              value={mentionSearch}
+              onChange={(e) => {
+                setMentionSearch(e.target.value);
+                setShowMentionDropdown(true);
+              }}
+              onFocus={() => setShowMentionDropdown(true)}
+              placeholder="Rechercher un contact à mentionner…"
+              className="flex-1 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
+            />
+          </div>
+
+          {showMentionDropdown && mentionSearch.length > 0 && (
+            <div className="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+              {mentionSuggestions.length === 0 ? (
+                <p className="px-4 py-3 text-sm text-muted-foreground">Aucun contact trouvé.</p>
+              ) : (
+                <ul className="max-h-48 overflow-y-auto divide-y divide-gray-100">
+                  {mentionSuggestions.map((c) => (
+                    <li key={c.id}>
+                      <button
+                        onMouseDown={(e) => e.preventDefault()} // évite blur avant click
+                        onClick={() => addMentionedContact(c)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground">{c.full_name}</p>
+                          {(c.company || c.job_title) && (
+                            <p className="text-xs text-muted-foreground">
+                              {[c.job_title, c.company].filter(Boolean).join(" · ")}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {error && (
