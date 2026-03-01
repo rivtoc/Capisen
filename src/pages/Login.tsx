@@ -27,7 +27,11 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError("Identifiants incorrects. Vérifie ton e-mail et ton mot de passe.");
+      if (error.message.toLowerCase().includes("email not confirmed")) {
+        setError("Vérifie ta boîte mail et clique sur le lien de confirmation.");
+      } else {
+        setError("Identifiants incorrects. Vérifie ton e-mail et ton mot de passe.");
+      }
     } else {
       navigate("/dashboard");
     }
