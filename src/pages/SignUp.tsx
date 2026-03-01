@@ -53,21 +53,8 @@ const SignUp = () => {
     } else if (!data.user || data.user.identities?.length === 0) {
       setError("Cette adresse e-mail est déjà utilisée. Connecte-toi ou réinitialise ton mot de passe.");
     } else {
-      // Création du profil dans la table profiles
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          id: data.user.id,
-          full_name: fullName,
-          pole: pole as string,
-          role: "normal",
-        });
-
-      if (profileError) {
-        setError("Compte créé mais erreur profil : " + profileError.message);
-      } else {
-        setSuccess(true);
-      }
+      // Le profil sera créé automatiquement au premier login, après confirmation du mail
+      setSuccess(true);
     }
 
     setLoading(false);

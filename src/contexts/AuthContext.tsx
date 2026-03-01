@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+
 import { supabase } from "@/lib/supabase";
 import type { MemberRole, PoleType } from "@/lib/db-types";
 
@@ -43,13 +44,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     sessionRef.current = session;
   }, [session]);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (user: User) => {
     const { data } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", userId)
+      .eq("id", user.id)
       .single();
-    setProfile(data as UserProfile | null);
+
+    if (!data && user.email_confirmed_at) {
+      // Premier login après confirmation : créer le profil depuis les métadonnées
+      const meta = user.user_metadata ?? {};
+      const { data: created } = await supabase
+        .from("profiles")
+        .insert({
+          id: user.id,
+          full_name: meta.full_name ?? "",
+          pole: meta.pole ?? "secretariat",
+          role: "normal",
+        })
+        .select()
+        .single();
+      setProfile(created as UserProfile | null);
+    } else {
+      setProfile(data as UserProfile | null);
+    }
   };
 
   const signOut = async () => {
@@ -95,7 +113,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       if (data.session?.user) {
-        fetchProfile(data.session.user.id).finally(() => setLoading(false));
+        fetchProfile(data.session.user).finally(() => setLoading(false));
       } else {
         setLoading(false);
       }
@@ -104,7 +122,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user);
       } else {
         setProfile(null);
         localStorage.removeItem(ACTIVITY_KEY);
