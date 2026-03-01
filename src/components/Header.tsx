@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo-capisen.png";
 
 const Header = () => {
   const navigate = useNavigate();
+  const { session } = useAuth();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -66,7 +68,7 @@ const Header = () => {
             Nous contacter
           </button>
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate(session ? "/dashboard" : "/login")}
             className="px-5 py-2.5 bg-transparent text-primary border border-primary text-sm font-medium rounded-lg hover:bg-primary/10 transition-colors"
           >
             Espace membres

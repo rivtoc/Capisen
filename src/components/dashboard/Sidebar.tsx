@@ -1,24 +1,17 @@
 import { useState } from "react";
 import {
-  BookOpen,
-  Mail,
-  Settings,
-  ChevronDown,
-  ChevronRight,
-  Lock,
-  Wand2,
-  Users,
-  FileText,
-  Package,
-  History,
+  BookOpen, Mail, Settings, ChevronDown, ChevronRight,
+  Lock, Wand2, Users, FileText, Package, History,
+  BarChart3, FolderOpen, FilePlus, Building2,
 } from "lucide-react";
 import type { UserProfile } from "@/contexts/AuthContext";
+import { POLE_OPTIONS } from "@/lib/db-types";
 
 interface SubItem {
   key: string;
   label: string;
   icon: React.ReactNode;
-  presidenceOnly?: boolean;
+  locked?: boolean;
 }
 
 interface MenuItem {
@@ -27,34 +20,8 @@ interface MenuItem {
   icon: React.ReactNode;
   children?: SubItem[];
   comingSoon?: boolean;
+  hidden?: boolean;
 }
-
-const menuItems: MenuItem[] = [
-  {
-    key: "formations",
-    label: "Formations",
-    icon: <BookOpen size={18} />,
-    comingSoon: true,
-  },
-  {
-    key: "mails",
-    label: "Mails",
-    icon: <Mail size={18} />,
-    children: [
-      { key: "mails/compose", label: "Rédaction IA", icon: <Wand2 size={15} />, presidenceOnly: true },
-      { key: "mails/contacts", label: "Contacts", icon: <Users size={15} /> },
-      { key: "mails/templates", label: "Templates", icon: <FileText size={15} /> },
-      { key: "mails/offres", label: "Offres", icon: <Package size={15} /> },
-      { key: "mails/history", label: "Historique", icon: <History size={15} /> },
-    ],
-  },
-  {
-    key: "settings",
-    label: "Paramètres",
-    icon: <Settings size={18} />,
-    comingSoon: true,
-  },
-];
 
 interface SidebarProps {
   activeView: string;
@@ -75,11 +42,81 @@ const Sidebar = ({ activeView, setActiveView, profile }: SidebarProps) => {
   };
 
   const isPresidence = profile?.role === "presidence";
+  const isResponsable = profile?.role === "responsable";
+  const userPole = profile?.pole;
+
+  // Supervision : présidence voit tous les pôles, responsable voit seulement le sien
+  const supervisionVisible = isPresidence || isResponsable;
+  const supervisionSubItems: SubItem[] = isPresidence
+    ? POLE_OPTIONS.map((p) => ({
+        key: `supervision/${p.value}`,
+        label: p.label,
+        icon: <Building2 size={15} />,
+      }))
+    : isResponsable && userPole
+    ? [
+        {
+          key: `supervision/${userPole}`,
+          label: POLE_OPTIONS.find((p) => p.value === userPole)?.label ?? userPole,
+          icon: <Building2 size={15} />,
+        },
+      ]
+    : [];
+
+  // Études : accessible aux pôles présidence, étude, qualité
+  const etudesVisible =
+    userPole === "presidence" || userPole === "etude" || userPole === "qualite";
+
+  const menuItems: MenuItem[] = [
+    {
+      key: "formations",
+      label: "Formations",
+      icon: <BookOpen size={18} />,
+      comingSoon: true,
+    },
+    {
+      key: "supervision",
+      label: "Supervision",
+      icon: <BarChart3 size={18} />,
+      hidden: !supervisionVisible,
+      children: supervisionSubItems,
+    },
+    {
+      key: "mails",
+      label: "Mails",
+      icon: <Mail size={18} />,
+      children: [
+        { key: "mails/compose", label: "Rédaction IA", icon: <Wand2 size={15} />, locked: !isPresidence },
+        { key: "mails/contacts", label: "Contacts", icon: <Users size={15} /> },
+        { key: "mails/templates", label: "Templates", icon: <FileText size={15} /> },
+        { key: "mails/offres", label: "Offres", icon: <Package size={15} /> },
+        { key: "mails/history", label: "Historique", icon: <History size={15} /> },
+      ],
+    },
+    {
+      key: "etudes",
+      label: "Études",
+      icon: <FolderOpen size={18} />,
+      hidden: !etudesVisible,
+      children: [
+        { key: "etudes/generer", label: "Générer", icon: <FilePlus size={15} /> },
+        { key: "etudes/historique", label: "Historique", icon: <History size={15} /> },
+      ],
+    },
+    {
+      key: "settings",
+      label: "Paramètres",
+      icon: <Settings size={18} />,
+      comingSoon: true,
+    },
+  ];
 
   return (
     <aside className="w-56 bg-white border-r border-gray-200 flex flex-col py-4 shrink-0">
       <nav className="flex-1 px-3 space-y-1">
         {menuItems.map((item) => {
+          if (item.hidden) return null;
+
           if (item.children) {
             const isOpen = openMenus.has(item.key);
             const isParentActive = activeView.startsWith(item.key);
@@ -103,13 +140,13 @@ const Sidebar = ({ activeView, setActiveView, profile }: SidebarProps) => {
                 {isOpen && (
                   <div className="ml-4 mt-1 space-y-0.5 border-l border-gray-100 pl-3">
                     {item.children.map((child) => {
-                      const locked = child.presidenceOnly && !isPresidence;
+                      const locked = child.locked ?? false;
                       const isActive = activeView === child.key;
                       return (
                         <button
                           key={child.key}
                           onClick={() => !locked && setActiveView(child.key)}
-                          title={locked ? "Réservé à la Présidence" : undefined}
+                          title={locked ? "Accès restreint" : undefined}
                           className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
                             locked
                               ? "text-gray-400 cursor-not-allowed"

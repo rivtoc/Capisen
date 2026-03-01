@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import type { MemberRole, PoleType } from "@/lib/db-types";
@@ -19,6 +19,10 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
 }
 
+const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 heure en millisecondes
+const ACTIVITY_KEY = "capisen_last_activity";
+const CHECK_INTERVAL = 60 * 1000; // vérification toutes les minutes
+
 const AuthContext = createContext<AuthContextValue>({
   session: null,
   user: null,
@@ -31,6 +35,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const sessionRef = useRef<Session | null>(null);
+  const inactivityTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Garde sessionRef à jour pour les closures des event listeners
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -39,6 +50,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .eq("id", userId)
       .single();
     setProfile(data as UserProfile | null);
+  };
+
+  const signOut = async () => {
+    localStorage.removeItem(ACTIVITY_KEY);
+    await supabase.auth.signOut();
+  };
+
+  // Met à jour le timestamp d'activité
+  const updateActivity = () => {
+    localStorage.setItem(ACTIVITY_KEY, Date.now().toString());
+  };
+
+  // Démarre la surveillance d'inactivité
+  const startInactivityWatch = () => {
+    updateActivity();
+
+    const activityEvents = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"];
+    activityEvents.forEach((event) =>
+      window.addEventListener(event, updateActivity, { passive: true })
+    );
+
+    inactivityTimer.current = setInterval(() => {
+      if (!sessionRef.current) return; // pas connecté, rien à faire
+
+      const lastActivity = parseInt(localStorage.getItem(ACTIVITY_KEY) ?? "0", 10);
+      const inactive = Date.now() - lastActivity > INACTIVITY_TIMEOUT;
+
+      if (inactive) {
+        localStorage.removeItem(ACTIVITY_KEY);
+        supabase.auth.signOut();
+      }
+    }, CHECK_INTERVAL);
+
+    return () => {
+      activityEvents.forEach((event) =>
+        window.removeEventListener(event, updateActivity)
+      );
+      if (inactivityTimer.current) clearInterval(inactivityTimer.current);
+    };
   };
 
   useEffect(() => {
@@ -57,15 +107,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         fetchProfile(session.user.id);
       } else {
         setProfile(null);
+        localStorage.removeItem(ACTIVITY_KEY);
       }
     });
 
-    return () => listener.subscription.unsubscribe();
-  }, []);
+    const stopWatch = startInactivityWatch();
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
+    return () => {
+      listener.subscription.unsubscribe();
+      stopWatch();
+    };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, signOut }}>
