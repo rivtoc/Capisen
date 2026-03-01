@@ -1,5 +1,15 @@
 // Miroir des types Supabase — à synchroniser si la BDD évolue
 
+export const CONTENT_TYPES = [
+  { value: "mail_client",      label: "Mail client" },
+  { value: "mail_partenariat", label: "Mail partenariat" },
+  { value: "mail_relance",     label: "Relance client" },
+  { value: "linkedin_message", label: "Message LinkedIn" },
+  { value: "linkedin_post",    label: "Post LinkedIn" },
+] as const;
+
+export type ContentType = (typeof CONTENT_TYPES)[number]["value"];
+
 export const POLE_OPTIONS = [
   { value: "secretariat",   label: "Secrétariat" },
   { value: "tresorerie",    label: "Trésorerie" },

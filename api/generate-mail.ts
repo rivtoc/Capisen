@@ -28,6 +28,7 @@ interface SenderInfo {
 interface InitialBody {
   contact?: ContactInfo;
   contacts?: ContactInfo[];
+  contentType?: string;
   template: TemplateInfo;
   offres: OffreInfo[];
   context: string;
@@ -40,10 +41,15 @@ interface RefinementBody {
   refinement: string;
 }
 
-// Persona constante — s'applique à toutes les générations et à tous les raffinements
+// Persona + règles de ton — strictes
 const SYSTEM_PROMPT = `Tu es l'assistant de rédaction de Capisen, la Junior-Entreprise de l'ISEN Brest.
-Tu rédiges des mails professionnels en français, au nom de Capisen.
-Quand on te demande de modifier un mail existant, fournis directement le mail révisé et complet, sans explication ni commentaire autour.`;
+
+RÈGLES IMPÉRATIVES — à respecter absolument :
+- Sois direct, concis et naturel. Zéro phrase de remplissage.
+- INTERDIT d'utiliser ces formules ou leurs variantes : "J'espère que ce message vous trouve en bonne santé", "Je me permets de vous contacter", "N'hésitez pas à revenir vers moi", "Dans l'espoir d'une suite favorable", "Restant à votre disposition", "En espérant une réponse favorable", "Je me tiens à votre disposition", "N'hésitez pas à me contacter".
+- Copie le style et la structure du template fourni — c'est ta référence principale pour le ton et la formulation.
+- Chaque texte a un seul objectif clair. Va droit au but dès les premières lignes.
+- Si on te demande de modifier un texte existant, fournis directement le texte corrigé et complet, sans explication ni commentaire autour.`;
 
 const POLE_LABELS: Record<string, string> = {
   secretariat: "Secrétariat", tresorerie: "Trésorerie", rh_event: "RH & Événements",
@@ -54,12 +60,45 @@ const ROLE_LABELS: Record<string, string> = {
   normal: "Membre", responsable: "Responsable", presidence: "Présidence",
 };
 
-function buildInitialPrompt(body: InitialBody): string {
-  const { contact, contacts, template, offres, context, mentionedContacts, sender } = body;
+// Instructions finales de génération selon le type de contenu
+const GENERATION_INSTRUCTIONS: Record<string, string> = {
+  mail_client: `Rédige le mail avec :
+1. L'objet du mail (préfixé par "Objet : ")
+2. Une ouverture directe — pas de formule vide
+3. Le corps : clair, concis, un seul objectif par mail
+4. Une clôture courte et une signature "Capisen"`,
 
-  // Support both single contact (legacy) and contacts array
+  mail_partenariat: `Rédige le mail avec :
+1. L'objet du mail (préfixé par "Objet : ")
+2. Une ouverture directe sur la raison du contact
+3. Le corps : ce qu'on propose, pourquoi ça a du sens, quelle suite on suggère
+4. Une clôture courte et une signature "Capisen"`,
+
+  mail_relance: `Rédige le mail de relance avec :
+1. L'objet du mail (préfixé par "Objet : ")
+2. Une phrase de contexte rapide (rappel du mail précédent, sans s'excuser)
+3. La relance directe : qu'est-ce qu'on attend comme suite ?
+4. Une clôture courte et une signature "Capisen"`,
+
+  linkedin_message: `Rédige le message LinkedIn avec :
+- Pas d'objet, pas de formule d'ouverture pompeuse
+- 3 à 5 phrases maximum, ton direct et humain
+- Un appel à l'action clair en fin de message`,
+
+  linkedin_post: `Rédige le post LinkedIn avec :
+- Une accroche forte en première ligne (pas de question banale type "Vous êtes-vous déjà demandé ?")
+- Corps aéré avec retours à la ligne, 150 à 250 mots max
+- Un appel à l'action ou une question ouverte en conclusion
+- Pas de formule d'ouverture, pas de signature formelle`,
+};
+
+function buildInitialPrompt(body: InitialBody): string {
+  const { contact, contacts, contentType, template, offres, context, mentionedContacts, sender } = body;
+
   const recipients: ContactInfo[] =
     contacts && contacts.length > 0 ? contacts : contact ? [contact] : [];
+
+  const isPost = contentType === "linkedin_post";
 
   const offresText =
     offres && offres.length > 0
@@ -84,47 +123,48 @@ function buildInitialPrompt(body: InitialBody): string {
 - Nom : ${sender.full_name}
 - Rôle au sein de Capisen : ${ROLE_LABELS[sender.role] ?? sender.role}
 - Pôle : ${POLE_LABELS[sender.pole] ?? sender.pole}
-Signe le mail avec ton prénom ou ton nom complet selon le niveau de formalité, et adapte le ton à ton rôle.
+Signe le texte avec ton prénom ou ton nom complet selon le niveau de formalité.
 
 `
     : "";
 
-  let recipientBlock: string;
-  if (recipients.length === 1) {
-    const c = recipients[0];
-    recipientBlock = `**Contact destinataire :**
+  let recipientBlock = "";
+  if (!isPost && recipients.length > 0) {
+    if (recipients.length === 1) {
+      const c = recipients[0];
+      recipientBlock = `**Contact destinataire :**
 - Nom : ${c.full_name}
 - Entreprise : ${c.company ?? "Non renseignée"}
 - Poste : ${c.job_title ?? "Non renseigné"}
-- Email : ${c.email ?? "Non renseigné"}`;
-  } else {
-    recipientBlock = `**Contacts destinataires (${recipients.length} personnes) :**
+- Email : ${c.email ?? "Non renseigné"}
+
+`;
+    } else {
+      recipientBlock = `**Contacts destinataires (${recipients.length} personnes) :**
 ${recipients
   .map((c) => {
     const details = [c.job_title, c.company].filter(Boolean).join(", ");
     return `- ${c.full_name}${details ? ` (${details})` : ""}`;
   })
   .join("\n")}
-Adresse le mail à tous les destinataires de façon appropriée.`;
+Adresse le texte à tous les destinataires de façon appropriée.
+
+`;
+    }
   }
 
-  return `${senderBlock}${recipientBlock}
+  const generationInstructions =
+    GENERATION_INSTRUCTIONS[contentType ?? "mail_client"] ?? GENERATION_INSTRUCTIONS["mail_client"];
 
-**Type de mail : ${template.title}**
-${template.context ? `Instructions spécifiques : ${template.context}\n` : ""}
+  return `${senderBlock}${recipientBlock}**Template : ${template.title}**
+${template.context ? `Instructions du template : ${template.context}\n` : ""}
 **Offres / Prestations à mettre en avant :**
 ${offresText}
 
 **Contexte supplémentaire :**
 ${context || "Aucun contexte supplémentaire."}
-${mentionedText ? `\n**Profils des personnes mentionnées dans le contexte :**\n${mentionedText}\n(Utilise ces informations si elles sont pertinentes pour personnaliser le mail.)` : ""}
-Rédige maintenant le mail complet avec :
-1. L'objet du mail (préfixé par "Objet : ")
-2. La formule d'ouverture personnalisée (adaptée à ${recipients.length > 1 ? "plusieurs destinataires" : "ce destinataire"})
-3. Le corps du message, professionnel et adapté au(x) contact(s)
-4. La formule de clôture et la signature "L'équipe Capisen"
-
-Le mail doit être en français, professionnel mais accessible, et donner envie de répondre.`;
+${mentionedText ? `\n**Profils des personnes mentionnées :**\n${mentionedText}\n(Utilise ces informations si pertinentes.)` : ""}
+${generationInstructions}`;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -144,16 +184,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let messages: Message[];
 
   if ("messages" in body && Array.isArray(body.messages)) {
-    // Mode raffinement — on ajoute la demande de l'utilisateur à l'historique existant
     if (!body.refinement?.trim()) {
       return res.status(400).json({ error: "Message de raffinement manquant." });
     }
     messages = [...body.messages, { role: "user", content: body.refinement }];
   } else {
-    // Mode génération initiale — on construit le premier message depuis le contexte
     const initial = body as InitialBody;
+    const isPost = initial.contentType === "linkedin_post";
     const hasContact = (initial.contacts && initial.contacts.length > 0) || initial.contact;
-    if (!hasContact || !initial.template) {
+    if ((!hasContact && !isPost) || !initial.template) {
       return res.status(400).json({ error: "Contact et template sont requis." });
     }
     messages = [{ role: "user", content: buildInitialPrompt(initial) }];
@@ -183,7 +222,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const data = await response.json() as { content?: Array<{ text: string }> };
     const mail = data.content?.[0]?.text ?? "";
 
-    // On retourne le mail + la conversation complète mise à jour
     const updatedMessages: Message[] = [...messages, { role: "assistant", content: mail }];
     return res.status(200).json({ mail, messages: updatedMessages });
 

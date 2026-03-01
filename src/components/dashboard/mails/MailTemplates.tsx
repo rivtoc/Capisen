@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Pencil, Trash2, X, Loader2, Search, UserPlus } from "lucide-react";
+import { CONTENT_TYPES } from "@/lib/db-types";
 
 interface Contact {
   id: string;
@@ -14,6 +15,7 @@ interface Template {
   id: string;
   title: string;
   context: string | null;
+  type: string | null;
   mentioned_contact_ids: string[] | null;
   created_by: string | null;
 }
@@ -29,6 +31,7 @@ const MailTemplates = () => {
   // Champs du formulaire
   const [title, setTitle] = useState("");
   const [context, setContext] = useState("");
+  const [type, setType] = useState("");
   const [mentionedContacts, setMentionedContacts] = useState<Contact[]>([]);
   const [mentionSearch, setMentionSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -49,7 +52,6 @@ const MailTemplates = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  // Fermer le dropdown si clic en dehors
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (mentionRef.current && !mentionRef.current.contains(e.target as Node)) {
@@ -64,6 +66,7 @@ const MailTemplates = () => {
   const openAdd = () => {
     setTitle("");
     setContext("");
+    setType("");
     setMentionedContacts([]);
     setEditId(null);
     setError(null);
@@ -73,10 +76,10 @@ const MailTemplates = () => {
   const openEdit = (t: Template) => {
     setTitle(t.title);
     setContext(t.context ?? "");
+    setType(t.type ?? "");
     setEditId(t.id);
     setError(null);
     setShowForm(true);
-    // Pré-charger les contacts liés
     const linked = contacts.filter((c) => t.mentioned_contact_ids?.includes(c.id));
     setMentionedContacts(linked);
   };
@@ -104,6 +107,7 @@ const MailTemplates = () => {
     const payload = {
       title: title.trim(),
       context: context || null,
+      type: type || null,
       mentioned_contact_ids: mentionedContacts.length > 0 ? mentionedContacts.map((c) => c.id) : null,
     };
 
@@ -126,12 +130,15 @@ const MailTemplates = () => {
     setTemplates((prev) => prev.filter((t) => t.id !== id));
   };
 
+  const typeLabel = (t: Template) =>
+    CONTENT_TYPES.find((ct) => ct.value === t.type)?.label ?? null;
+
   return (
     <div className="p-8 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-foreground mb-1">Templates</h2>
-          <p className="text-sm text-muted-foreground">Définissez les types de mails que vous envoyez.</p>
+          <p className="text-sm text-muted-foreground">Définissez les types de messages que vous envoyez.</p>
         </div>
         <button
           onClick={openAdd}
@@ -166,6 +173,33 @@ const MailTemplates = () => {
               />
             </div>
 
+            {/* Type */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-foreground">
+                Type de contenu{" "}
+                <span className="text-muted-foreground font-normal">(optionnel)</span>
+              </label>
+              <p className="text-xs text-muted-foreground -mt-1">
+                Associe ce template à un type pour qu'il apparaisse automatiquement lors de la génération.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {CONTENT_TYPES.map((ct) => (
+                  <button
+                    key={ct.value}
+                    type="button"
+                    onClick={() => setType(type === ct.value ? "" : ct.value)}
+                    className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                      type === ct.value
+                        ? "bg-black text-white border-black"
+                        : "bg-white text-foreground border-gray-200 hover:border-gray-400"
+                    }`}
+                  >
+                    {ct.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Instructions IA */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">
@@ -176,7 +210,7 @@ const MailTemplates = () => {
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
                 rows={5}
-                placeholder="Ex : Ce mail est une prise de contact initiale. Le ton doit être professionnel mais chaleureux. L'objectif est d'obtenir un premier rendez-vous…"
+                placeholder="Ex : Prise de contact initiale suite à un forum. Ton direct, objectif = obtenir un RDV…"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
               />
             </div>
@@ -192,7 +226,6 @@ const MailTemplates = () => {
                 Ces contacts seront auto-chargés dans "Personnes mentionnées" lors de la génération.
               </p>
 
-              {/* Tags */}
               {mentionedContacts.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {mentionedContacts.map((c) => (
@@ -215,7 +248,6 @@ const MailTemplates = () => {
                 </div>
               )}
 
-              {/* Recherche */}
               <div ref={mentionRef} className="relative">
                 <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus-within:ring-2 focus-within:ring-black/10 focus-within:border-black transition">
                   <Search size={14} className="text-muted-foreground shrink-0" />
@@ -286,12 +318,13 @@ const MailTemplates = () => {
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : templates.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
-          <p className="text-sm">Aucun template. Créez-en un pour commencer à générer des mails.</p>
+          <p className="text-sm">Aucun template. Créez-en un pour commencer.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {templates.map((t) => {
             const linkedCount = t.mentioned_contact_ids?.length ?? 0;
+            const tLabel = typeLabel(t);
             return (
               <div
                 key={t.id}
@@ -300,6 +333,11 @@ const MailTemplates = () => {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium text-foreground text-sm">{t.title}</p>
+                    {tLabel && (
+                      <span className="text-xs bg-gray-100 text-muted-foreground px-2 py-0.5 rounded-full">
+                        {tLabel}
+                      </span>
+                    )}
                     {linkedCount > 0 && (
                       <span className="text-xs text-muted-foreground bg-gray-100 px-2 py-0.5 rounded-full">
                         {linkedCount} contact{linkedCount !== 1 ? "s" : ""} lié{linkedCount !== 1 ? "s" : ""}
