@@ -84,7 +84,7 @@ const MailHistory = () => {
     CONTENT_TYPES.find((ct) => ct.value === type)?.label ?? null;
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-8 max-w-5xl mx-auto">
       <h2 className="text-xl font-bold text-foreground mb-1">Historique</h2>
       <p className="text-sm text-muted-foreground mb-6">
         Contenus générés par l'IA, du plus récent au plus ancien.

@@ -134,7 +134,7 @@ const MailTemplates = () => {
     CONTENT_TYPES.find((ct) => ct.value === t.type)?.label ?? null;
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-foreground mb-1">Templates</h2>

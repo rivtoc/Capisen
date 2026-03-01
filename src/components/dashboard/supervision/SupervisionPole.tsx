@@ -57,7 +57,7 @@ const SupervisionPole = ({ pole }: Props) => {
   };
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="px-8 py-8">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-foreground mb-1">
           Supervision — {poleLabel}

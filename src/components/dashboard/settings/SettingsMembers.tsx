@@ -87,7 +87,7 @@ const SettingsMembers = () => {
   );
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="px-8 py-8">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-foreground mb-1">Gestion des membres</h2>
         <p className="text-sm text-muted-foreground">
@@ -110,8 +110,8 @@ const SettingsMembers = () => {
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden overflow-x-auto">
+          <table className="w-full text-sm min-w-[560px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-5 py-3 font-medium text-foreground">Membre</th>

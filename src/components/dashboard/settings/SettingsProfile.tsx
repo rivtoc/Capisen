@@ -127,7 +127,7 @@ const SettingsProfile = () => {
   const pwdFormFilled = oldPassword.length > 0 && newPassword.length > 0 && confirmPassword.length > 0;
 
   return (
-    <div className="p-8 max-w-xl space-y-6">
+    <div className="p-8 max-w-xl mx-auto space-y-6">
       <div className="mb-2">
         <h2 className="text-xl font-bold text-foreground mb-1">Mon profil</h2>
         <p className="text-sm text-muted-foreground">

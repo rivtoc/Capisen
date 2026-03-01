@@ -242,7 +242,7 @@ const MailContacts = () => {
   ];
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="px-8 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-foreground mb-1">Contacts</h2>
@@ -451,8 +451,8 @@ const MailContacts = () => {
         </div>
       ) : (
         <>
-          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium text-foreground">Nom</th>

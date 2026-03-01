@@ -10,7 +10,7 @@ const DOCUMENT_TYPES = [
 
 const EtudesGenerer = () => {
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-8 max-w-xl mx-auto">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-foreground mb-1">Générer les documents</h2>
         <p className="text-sm text-muted-foreground">

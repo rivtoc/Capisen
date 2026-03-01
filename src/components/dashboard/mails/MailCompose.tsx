@@ -277,7 +277,7 @@ const MailCompose = () => {
   const resultLabel = CONTENT_TYPES.find((ct) => ct.value === contentType)?.label ?? "Résultat";
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-8 max-w-3xl mx-auto">
       <h2 className="text-xl font-bold text-foreground mb-1">Rédaction IA</h2>
       <p className="text-sm text-muted-foreground mb-8">
         Génère un mail, un message ou un post grâce à Claude.
