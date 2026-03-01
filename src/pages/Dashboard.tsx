@@ -11,6 +11,8 @@ import MailHistory from "@/components/dashboard/mails/MailHistory";
 import SupervisionPole from "@/components/dashboard/supervision/SupervisionPole";
 import EtudesGenerer from "@/components/dashboard/etudes/EtudesGenerer";
 import EtudesHistorique from "@/components/dashboard/etudes/EtudesHistorique";
+import SettingsMembers from "@/components/dashboard/settings/SettingsMembers";
+import SettingsProfile from "@/components/dashboard/settings/SettingsProfile";
 import type { PoleType } from "@/lib/db-types";
 
 const Dashboard = () => {
@@ -45,20 +47,15 @@ const Dashboard = () => {
         return <EtudesGenerer />;
       case "etudes/historique":
         return <EtudesHistorique />;
+      case "settings/membres":
+        return <SettingsMembers />;
+      case "settings/profil":
+        return <SettingsProfile />;
       case "formations":
         return (
           <div className="flex items-center justify-center h-64 text-muted-foreground">
             <div className="text-center">
               <p className="text-lg font-medium mb-2">Formations</p>
-              <p className="text-sm">Cette section est en cours de développement.</p>
-            </div>
-          </div>
-        );
-      case "settings":
-        return (
-          <div className="flex items-center justify-center h-64 text-muted-foreground">
-            <div className="text-center">
-              <p className="text-lg font-medium mb-2">Paramètres</p>
               <p className="text-sm">Cette section est en cours de développement.</p>
             </div>
           </div>

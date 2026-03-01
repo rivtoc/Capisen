@@ -17,7 +17,9 @@ interface OffreInfo {
   description: string | null;
 }
 
-interface GenerateMailBody {
+type Message = { role: "user" | "assistant"; content: string };
+
+interface InitialBody {
   contact: ContactInfo;
   template: TemplateInfo;
   offres: OffreInfo[];
@@ -25,37 +27,22 @@ interface GenerateMailBody {
   mentionedContacts?: ContactInfo[];
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+interface RefinementBody {
+  messages: Message[];
+  refinement: string;
+}
 
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
-  }
+// Persona constante — s'applique à toutes les générations et à tous les raffinements
+const SYSTEM_PROMPT = `Tu es l'assistant de rédaction de Capisen, la Junior-Entreprise de l'ISEN Brest.
+Tu rédiges des mails professionnels en français, au nom de Capisen.
+Quand on te demande de modifier un mail existant, fournis directement le mail révisé et complet, sans explication ni commentaire autour.`;
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: "Clé API Anthropic non configurée." });
-  }
-
-  const { contact, template, offres, context, mentionedContacts } = req.body as GenerateMailBody;
-
-  if (!contact || !template) {
-    return res.status(400).json({ error: "Contact et template sont requis." });
-  }
+function buildInitialPrompt(body: InitialBody): string {
+  const { contact, template, offres, context, mentionedContacts } = body;
 
   const offresText =
     offres && offres.length > 0
-      ? offres
-          .map((o) => `- ${o.title}${o.description ? ` : ${o.description}` : ""}`)
-          .join("\n")
+      ? offres.map((o) => `- ${o.title}${o.description ? ` : ${o.description}` : ""}`).join("\n")
       : "Aucune offre sélectionnée.";
 
   const mentionedText =
@@ -71,31 +58,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .join("\n")
       : null;
 
-  const prompt = `Tu es chargé de rédiger un mail professionnel au nom de Capisen, la Junior-Entreprise de l'ISEN Brest.
-
-**Informations sur le contact destinataire :**
+  return `**Contact destinataire :**
 - Nom : ${contact.full_name}
 - Entreprise : ${contact.company ?? "Non renseignée"}
 - Poste : ${contact.job_title ?? "Non renseigné"}
 - Email : ${contact.email ?? "Non renseigné"}
 
 **Type de mail : ${template.title}**
-${template.context ? `Instructions spécifiques : ${template.context}` : ""}
-
+${template.context ? `Instructions spécifiques : ${template.context}\n` : ""}
 **Offres / Prestations à mettre en avant :**
 ${offresText}
 
 **Contexte supplémentaire :**
 ${context || "Aucun contexte supplémentaire."}
 ${mentionedText ? `\n**Profils des personnes mentionnées dans le contexte :**\n${mentionedText}\n(Utilise ces informations si elles sont pertinentes pour personnaliser le mail.)` : ""}
-
-Rédige maintenant le mail complet, bien structuré, avec :
+Rédige maintenant le mail complet avec :
 1. L'objet du mail (préfixé par "Objet : ")
 2. La formule d'ouverture personnalisée
 3. Le corps du message, professionnel et adapté au contact
 4. La formule de clôture et la signature "L'équipe Capisen"
 
 Le mail doit être en français, professionnel mais accessible, et donner envie de répondre.`;
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") { res.status(200).end(); return; }
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Clé API Anthropic non configurée." });
+
+  const body = req.body as InitialBody | RefinementBody;
+
+  let messages: Message[];
+
+  if ("messages" in body && Array.isArray(body.messages)) {
+    // Mode raffinement — on ajoute la demande de l'utilisateur à l'historique existant
+    if (!body.refinement?.trim()) {
+      return res.status(400).json({ error: "Message de raffinement manquant." });
+    }
+    messages = [...body.messages, { role: "user", content: body.refinement }];
+  } else {
+    // Mode génération initiale — on construit le premier message depuis le contexte
+    const initial = body as InitialBody;
+    if (!initial.contact || !initial.template) {
+      return res.status(400).json({ error: "Contact et template sont requis." });
+    }
+    messages = [{ role: "user", content: buildInitialPrompt(initial) }];
+  }
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -108,7 +123,8 @@ Le mail doit être en français, professionnel mais accessible, et donner envie 
       body: JSON.stringify({
         model: "claude-opus-4-6",
         max_tokens: 1500,
-        messages: [{ role: "user", content: prompt }],
+        system: SYSTEM_PROMPT,
+        messages,
       }),
     });
 
@@ -119,7 +135,11 @@ Le mail doit être en français, professionnel mais accessible, et donner envie 
 
     const data = await response.json() as { content?: Array<{ text: string }> };
     const mail = data.content?.[0]?.text ?? "";
-    return res.status(200).json({ mail });
+
+    // On retourne le mail + la conversation complète mise à jour
+    const updatedMessages: Message[] = [...messages, { role: "assistant", content: mail }];
+    return res.status(200).json({ mail, messages: updatedMessages });
+
   } catch (err) {
     console.error("generate-mail error:", err);
     return res.status(500).json({ error: "Erreur lors de la génération du mail." });

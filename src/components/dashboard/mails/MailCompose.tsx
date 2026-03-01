@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wand2, Loader2, Copy, Check, Save, X, Search, UserPlus } from "lucide-react";
+import { Wand2, Loader2, Copy, Check, Save, X, Search, UserPlus, SendHorizonal, RotateCcw } from "lucide-react";
+
+type Message = { role: "user" | "assistant"; content: string };
 
 interface Contact {
   id: string;
@@ -47,6 +49,13 @@ const MailCompose = () => {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Raffinement conversationnel
+  const [conversation, setConversation] = useState<Message[]>([]);
+  const [refinementInput, setRefinementInput] = useState("");
+  const [refining, setRefining] = useState(false);
+  const [refinementError, setRefinementError] = useState<string | null>(null);
+  const [pastRefinements, setPastRefinements] = useState<string[]>([]);
 
   useEffect(() => {
     supabase.from("contacts").select("id, full_name, company, job_title, email").order("full_name").then(({ data }) => setContacts(data ?? []));
@@ -110,7 +119,7 @@ const MailCompose = () => {
     setMentionedContacts((prev) => prev.filter((c) => c.id !== id));
   };
 
-  // --- Génération ---
+  // --- Génération initiale ---
   const handleGenerate = async () => {
     if (!selectedContact || !selectedTemplate) {
       setError("Sélectionne un contact et un template.");
@@ -120,6 +129,10 @@ const MailCompose = () => {
     setGenerating(true);
     setResult("");
     setSaved(false);
+    setConversation([]);
+    setPastRefinements([]);
+    setRefinementInput("");
+    setRefinementError(null);
 
     const contact = contacts.find((c) => c.id === selectedContact);
     const template = templates.find((t) => t.id === selectedTemplate);
@@ -140,10 +153,42 @@ const MailCompose = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erreur inconnue");
       setResult(data.mail);
+      setConversation(data.messages ?? []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur lors de la génération.");
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // --- Raffinement conversationnel ---
+  const handleRefine = async () => {
+    if (!refinementInput.trim() || refining) return;
+    const request = refinementInput.trim();
+    setRefinementError(null);
+    setRefining(true);
+    setRefinementInput("");
+
+    try {
+      const res = await fetch("/api/generate-mail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: conversation,
+          refinement: request,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erreur inconnue");
+      setResult(data.mail);
+      setConversation(data.messages ?? []);
+      setPastRefinements((prev) => [...prev, request]);
+      setSaved(false);
+    } catch (err: unknown) {
+      setRefinementError(err instanceof Error ? err.message : "Erreur lors du raffinement.");
+      setRefinementInput(request); // restaure la saisie en cas d'erreur
+    } finally {
+      setRefining(false);
     }
   };
 
@@ -347,8 +392,9 @@ const MailCompose = () => {
       </button>
 
       {result && (
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-2">
+        <div className="mt-8 space-y-4">
+          {/* En-tête mail généré */}
+          <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-foreground">Mail généré</h3>
             <div className="flex gap-2">
               <button
@@ -368,12 +414,66 @@ const MailCompose = () => {
               </button>
             </div>
           </div>
+
+          {/* Textarea du mail */}
           <textarea
             value={result}
             onChange={(e) => setResult(e.target.value)}
             rows={18}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
           />
+
+          {/* Zone de raffinement */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <RotateCcw size={14} className="text-muted-foreground" />
+              <h4 className="text-sm font-semibold text-foreground">Affiner le mail</h4>
+            </div>
+
+            {/* Historique des raffinements */}
+            {pastRefinements.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {pastRefinements.map((r, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-muted-foreground text-xs rounded-full"
+                  >
+                    <Check size={10} className="text-green-500 shrink-0" />
+                    {r}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Champ de saisie */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={refinementInput}
+                onChange={(e) => setRefinementInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleRefine()}
+                placeholder="Ex : Rends-le plus court, change le ton, ajoute une accroche…"
+                disabled={refining}
+                className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition disabled:opacity-50"
+              />
+              <button
+                onClick={handleRefine}
+                disabled={!refinementInput.trim() || refining}
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {refining ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <SendHorizonal size={14} />
+                )}
+                {refining ? "En cours…" : "Affiner"}
+              </button>
+            </div>
+
+            {refinementError && (
+              <p className="text-sm text-red-500">{refinementError}</p>
+            )}
+          </div>
         </div>
       )}
     </div>

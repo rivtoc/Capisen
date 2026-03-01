@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   BookOpen, Mail, Settings, ChevronDown, ChevronRight,
   Lock, Wand2, Users, FileText, Package, History,
-  BarChart3, FolderOpen, FilePlus, Building2,
+  BarChart3, FolderOpen, FilePlus, Building2, UserCog, UserCircle,
 } from "lucide-react";
 import type { UserProfile } from "@/contexts/AuthContext";
 import { POLE_OPTIONS } from "@/lib/db-types";
@@ -107,7 +107,10 @@ const Sidebar = ({ activeView, setActiveView, profile }: SidebarProps) => {
       key: "settings",
       label: "Paramètres",
       icon: <Settings size={18} />,
-      comingSoon: true,
+      children: [
+        { key: "settings/membres", label: "Membres", icon: <UserCog size={15} />, locked: !isPresidence },
+        { key: "settings/profil", label: "Mon profil", icon: <UserCircle size={15} /> },
+      ],
     },
   ];
 

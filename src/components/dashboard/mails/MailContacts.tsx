@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Plus, Pencil, Trash2, X, Loader2, Upload, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, Upload, CheckCircle2, AlertCircle, Search } from "lucide-react";
+
+// Supprime les accents et met en minuscules — sans regex complexe
+const normalize = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 interface Contact {
   id: string;
@@ -93,6 +97,7 @@ function parseLinkedInCSV(text: string): ParsedContact[] {
 
 const MailContacts = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -218,6 +223,16 @@ const MailContacts = () => {
     setImportResult(null);
   };
 
+  // Recherche multi-champs (nom, entreprise, poste) — par mots, sans regex complexe
+  const searchTokens = normalize(search).split(" ").filter(Boolean);
+  const filtered = contacts.filter((c) => {
+    if (searchTokens.length === 0) return true;
+    const haystack = normalize(
+      [c.full_name, c.company, c.job_title].filter(Boolean).join(" ")
+    );
+    return searchTokens.every((token) => haystack.includes(token));
+  });
+
   const fields: { key: keyof ContactForm; label: string; placeholder: string }[] = [
     { key: "full_name", label: "Nom complet *", placeholder: "Jean Dupont" },
     { key: "company", label: "Entreprise", placeholder: "Acme Corp" },
@@ -256,6 +271,26 @@ const MailContacts = () => {
             Nouveau contact
           </button>
         </div>
+      </div>
+
+      {/* Barre de recherche */}
+      <div className="relative mb-5 max-w-sm">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        <input
+          type="text"
+          placeholder="Nom, prénom, entreprise, poste…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X size={13} />
+          </button>
+        )}
       </div>
 
       {/* Erreur de parsing */}
@@ -415,45 +450,60 @@ const MailContacts = () => {
           <p className="text-sm">Aucun contact pour l'instant. Ajoutez-en un ou importez depuis LinkedIn.</p>
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-foreground">Nom</th>
-                <th className="text-left px-4 py-3 font-medium text-foreground">Entreprise</th>
-                <th className="text-left px-4 py-3 font-medium text-foreground">Poste</th>
-                <th className="text-left px-4 py-3 font-medium text-foreground">Email</th>
-                <th className="px-4 py-3 w-20"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {contacts.map((c) => (
-                <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-foreground">{c.full_name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{c.company ?? "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{c.job_title ?? "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{c.email ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openEdit(c)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(c.id)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
+        <>
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium text-foreground">Nom</th>
+                  <th className="text-left px-4 py-3 font-medium text-foreground">Entreprise</th>
+                  <th className="text-left px-4 py-3 font-medium text-foreground">Poste</th>
+                  <th className="text-left px-4 py-3 font-medium text-foreground">Email</th>
+                  <th className="px-4 py-3 w-20"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">
+                      Aucun contact ne correspond à « {search} ».
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((c) => (
+                    <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-foreground">{c.full_name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.company ?? "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.job_title ?? "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{c.email ?? "—"}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEdit(c)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(c.id)}
+                            className="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            {search
+              ? `${filtered.length} résultat${filtered.length !== 1 ? "s" : ""} sur ${contacts.length} contact${contacts.length !== 1 ? "s" : ""}`
+              : `${contacts.length} contact${contacts.length !== 1 ? "s" : ""}`}
+          </p>
+        </>
       )}
     </div>
   );
