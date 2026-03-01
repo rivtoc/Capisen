@@ -46,6 +46,13 @@ const Dashboard = () => {
 
     if (activeView.startsWith("formations/")) {
       const pole = activeView.split("/")[1] as PoleType;
+      if (profile?.role !== "presidence" && pole !== profile?.pole) {
+        return (
+          <div className="p-8 text-center text-muted-foreground">
+            Accès réservé au pôle {profile?.pole}.
+          </div>
+        );
+      }
       return <FormationsPole pole={pole} />;
     }
 

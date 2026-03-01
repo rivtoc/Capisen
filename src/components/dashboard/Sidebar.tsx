@@ -47,8 +47,9 @@ const Sidebar = ({ activeView, setActiveView, profile, isOpen, onClose }: Sideba
   const isResponsable = profile?.role === "responsable";
   const userPole = profile?.pole;
 
-  // Formations : visible par tous, sous-items = tous les pôles
-  const formationsSubItems: SubItem[] = POLE_OPTIONS.map((p) => ({
+  // Formations : présidence voit tous les pôles, les autres uniquement le leur
+  const visiblePoles = isPresidence ? POLE_OPTIONS : POLE_OPTIONS.filter((p) => p.value === userPole);
+  const formationsSubItems: SubItem[] = visiblePoles.map((p) => ({
     key: `formations/${p.value}`,
     label: p.label,
     icon: <Building2 size={15} />,
@@ -78,8 +79,9 @@ const Sidebar = ({ activeView, setActiveView, profile, isOpen, onClose }: Sideba
       key: "mails",
       label: "Mails",
       icon: <Mail size={18} />,
+      hidden: !isPresidence,
       children: [
-        { key: "mails/compose", label: "Rédaction IA", icon: <Wand2 size={15} />, locked: !isPresidence },
+        { key: "mails/compose", label: "Rédaction IA", icon: <Wand2 size={15} /> },
         { key: "mails/contacts", label: "Contacts", icon: <Users size={15} /> },
         { key: "mails/templates", label: "Templates", icon: <FileText size={15} /> },
         { key: "mails/offres", label: "Offres", icon: <Package size={15} /> },

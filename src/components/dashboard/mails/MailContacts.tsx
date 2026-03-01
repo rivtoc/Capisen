@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Pencil, Trash2, X, Loader2, Upload, CheckCircle2, AlertCircle, Search } from "lucide-react";
 
 // Supprime les accents et met en minuscules — sans regex complexe
@@ -96,6 +97,7 @@ function parseLinkedInCSV(text: string): ParsedContact[] {
 }
 
 const MailContacts = () => {
+  const { user } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -148,7 +150,7 @@ const MailContacts = () => {
   const handleSave = async () => {
     if (!form.full_name.trim()) { setError("Le nom est requis."); return; }
     setSaving(true);
-    const payload = { ...form, full_name: form.full_name.trim() };
+    const payload = { ...form, full_name: form.full_name.trim(), user_id: user?.id };
     if (editId) {
       const { error: e } = await supabase.from("contacts").update(payload).eq("id", editId);
       if (e) { setError(e.message); setSaving(false); return; }
@@ -203,7 +205,7 @@ const MailContacts = () => {
     }
 
     for (const chunk of chunks) {
-      const { error: e, data } = await supabase.from("contacts").insert(chunk).select();
+      const { error: e, data } = await supabase.from("contacts").insert(chunk.map((c) => ({ ...c, user_id: user?.id }))).select();
       if (e) {
         skipped += chunk.length;
       } else {
