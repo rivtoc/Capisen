@@ -5,6 +5,7 @@ interface ContactInfo {
   company: string | null;
   job_title: string | null;
   email: string | null;
+  notes?: string | null;
 }
 
 interface TemplateInfo {
@@ -136,7 +137,7 @@ Signe le texte avec ton prénom ou ton nom complet selon le niveau de formalité
 - Nom : ${c.full_name}
 - Entreprise : ${c.company ?? "Non renseignée"}
 - Poste : ${c.job_title ?? "Non renseigné"}
-- Email : ${c.email ?? "Non renseigné"}
+- Email : ${c.email ?? "Non renseigné"}${c.notes ? `\n- Notes : ${c.notes}` : ""}
 
 `;
     } else {

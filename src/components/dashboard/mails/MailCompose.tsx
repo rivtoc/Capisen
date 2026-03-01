@@ -12,6 +12,7 @@ interface Contact {
   company: string | null;
   job_title: string | null;
   email: string | null;
+  notes: string | null;
 }
 
 interface Template {
@@ -71,7 +72,7 @@ const MailCompose = () => {
   const [pastRefinements, setPastRefinements] = useState<string[]>([]);
 
   useEffect(() => {
-    supabase.from("contacts").select("id, full_name, company, job_title, email").order("full_name").then(({ data }) => setContacts(data ?? []));
+    supabase.from("contacts").select("id, full_name, company, job_title, email, notes").order("full_name").then(({ data }) => setContacts(data ?? []));
     supabase.from("mail_templates").select("id, title, context, type, mentioned_contact_ids").order("title").then(({ data }) => setTemplates(data ?? []));
     supabase.from("offres_prestation").select("id, title, description").order("title").then(({ data }) => setOffres(data ?? []));
   }, []);
@@ -259,6 +260,7 @@ const MailCompose = () => {
       generated_by: user?.id,
       template_id: selectedTemplate || null,
       contact_id: primaryContact?.id || null,
+      content_type: contentType,
       prompt_final: `Type: ${contentType}\nContact(s): ${contactNames || "—"}\nTemplate: ${template?.title}\nContexte: ${context}`,
       result,
     });
