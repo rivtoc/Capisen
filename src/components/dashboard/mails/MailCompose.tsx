@@ -26,13 +26,21 @@ interface Offre {
   description: string | null;
 }
 
+const normalize = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
 const MailCompose = () => {
   const { user, profile } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [offres, setOffres] = useState<Offre[]>([]);
 
-  const [selectedContact, setSelectedContact] = useState("");
+  // Destinataires multiples
+  const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
+  const [contactSearch, setContactSearch] = useState("");
+  const [showContactDropdown, setShowContactDropdown] = useState(false);
+  const contactRef = useRef<HTMLDivElement>(null);
+
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [selectedOffres, setSelectedOffres] = useState<string[]>([]);
   const [context, setContext] = useState("");
@@ -63,9 +71,13 @@ const MailCompose = () => {
     supabase.from("offres_prestation").select("id, title, description").order("title").then(({ data }) => setOffres(data ?? []));
   }, []);
 
-  // Fermer le dropdown si clic en dehors
+  // Fermer les dropdowns si clic en dehors
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      if (contactRef.current && !contactRef.current.contains(e.target as Node)) {
+        setShowContactDropdown(false);
+        setContactSearch("");
+      }
       if (mentionRef.current && !mentionRef.current.contains(e.target as Node)) {
         setShowMentionDropdown(false);
         setMentionSearch("");
@@ -90,6 +102,28 @@ const MailCompose = () => {
     setSelectedOffres((prev) =>
       prev.includes(id) ? prev.filter((o) => o !== id) : [...prev, id]
     );
+  };
+
+  // --- Destinataires ---
+  const contactSuggestions = (() => {
+    const already = new Set(selectedContacts.map((c) => c.id));
+    if (!contactSearch.trim()) return contacts.filter((c) => !already.has(c.id));
+    const tokens = normalize(contactSearch).split(" ").filter(Boolean);
+    return contacts.filter((c) => {
+      if (already.has(c.id)) return false;
+      const haystack = normalize([c.full_name, c.company, c.job_title].filter(Boolean).join(" "));
+      return tokens.every((t) => haystack.includes(t));
+    });
+  })();
+
+  const addSelectedContact = (c: Contact) => {
+    setSelectedContacts((prev) => [...prev, c]);
+    setContactSearch("");
+    setShowContactDropdown(false);
+  };
+
+  const removeSelectedContact = (id: string) => {
+    setSelectedContacts((prev) => prev.filter((c) => c.id !== id));
   };
 
   // --- Contacts mentionnés ---
@@ -121,8 +155,8 @@ const MailCompose = () => {
 
   // --- Génération initiale ---
   const handleGenerate = async () => {
-    if (!selectedContact || !selectedTemplate) {
-      setError("Sélectionne un contact et un template.");
+    if (!selectedContacts.length || !selectedTemplate) {
+      setError("Sélectionne au moins un contact et un template.");
       return;
     }
     setError(null);
@@ -134,7 +168,6 @@ const MailCompose = () => {
     setRefinementInput("");
     setRefinementError(null);
 
-    const contact = contacts.find((c) => c.id === selectedContact);
     const template = templates.find((t) => t.id === selectedTemplate);
     const chosenOffres = offres.filter((o) => selectedOffres.includes(o.id));
 
@@ -143,11 +176,14 @@ const MailCompose = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contact,
+          contacts: selectedContacts,
           template,
           offres: chosenOffres,
           context,
           mentionedContacts,
+          sender: profile
+            ? { full_name: profile.full_name, role: profile.role, pole: profile.pole }
+            : undefined,
         }),
       });
       const data = await res.json();
@@ -195,13 +231,14 @@ const MailCompose = () => {
   const handleSave = async () => {
     if (!result) return;
     setSaving(true);
-    const contact = contacts.find((c) => c.id === selectedContact);
+    const primaryContact = selectedContacts[0];
     const template = templates.find((t) => t.id === selectedTemplate);
+    const contactNames = selectedContacts.map((c) => c.full_name).join(", ");
     await supabase.from("mail_generations").insert({
       generated_by: user?.id,
       template_id: selectedTemplate || null,
-      contact_id: selectedContact || null,
-      prompt_final: `Contact: ${contact?.full_name}\nTemplate: ${template?.title}\nContexte: ${context}`,
+      contact_id: primaryContact?.id || null,
+      prompt_final: `Contact(s): ${contactNames}\nTemplate: ${template?.title}\nContexte: ${context}`,
       result,
     });
     setSaved(true);
@@ -221,38 +258,107 @@ const MailCompose = () => {
         Génère un mail personnalisé grâce à Claude.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Contact destinataire */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-foreground">Contact destinataire *</label>
-          <select
-            value={selectedContact}
-            onChange={(e) => setSelectedContact(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition appearance-none"
-          >
-            <option value="">Sélectionne un contact…</option>
-            {contacts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.full_name}{c.company ? ` — ${c.company}` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Contact(s) destinataire(s) */}
+      <div className="mb-6 flex flex-col gap-1.5">
+        <label className="text-sm font-medium text-foreground">Contact(s) destinataire(s) *</label>
 
-        {/* Template */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-foreground">Template *</label>
-          <select
-            value={selectedTemplate}
-            onChange={(e) => handleTemplateChange(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition appearance-none"
-          >
-            <option value="">Sélectionne un template…</option>
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>{t.title}</option>
-            ))}
-          </select>
+        <div ref={contactRef} className="relative">
+          {/* Tags des contacts sélectionnés */}
+          {selectedContacts.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {selectedContacts.map((c) => (
+                <span
+                  key={c.id}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black text-white text-sm rounded-lg"
+                >
+                  <span className="font-medium">{c.full_name}</span>
+                  {c.company && (
+                    <span className="text-gray-300 text-xs">— {c.company}</span>
+                  )}
+                  <button
+                    onClick={() => removeSelectedContact(c.id)}
+                    className="ml-1 hover:text-gray-300 transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Champ de recherche */}
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-black/10 focus-within:border-black transition">
+            <Search size={14} className="text-muted-foreground shrink-0" />
+            <input
+              type="text"
+              value={contactSearch}
+              onChange={(e) => {
+                setContactSearch(e.target.value);
+                setShowContactDropdown(true);
+              }}
+              onFocus={() => setShowContactDropdown(true)}
+              placeholder={selectedContacts.length ? "Ajouter un destinataire…" : "Rechercher un contact…"}
+              className="flex-1 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
+            />
+            {contactSearch && (
+              <button
+                onClick={() => setContactSearch("")}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Dropdown */}
+          {showContactDropdown && (
+            <div className="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+              {contactSuggestions.length === 0 ? (
+                <p className="px-4 py-3 text-sm text-muted-foreground">
+                  {contacts.length === selectedContacts.length
+                    ? "Tous les contacts sont déjà sélectionnés."
+                    : "Aucun contact trouvé."}
+                </p>
+              ) : (
+                <ul className="max-h-52 overflow-y-auto divide-y divide-gray-100">
+                  {contactSuggestions.map((c) => (
+                    <li key={c.id}>
+                      <button
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => addSelectedContact(c)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground">{c.full_name}</p>
+                          {(c.company || c.job_title) && (
+                            <p className="text-xs text-muted-foreground">
+                              {[c.job_title, c.company].filter(Boolean).join(" · ")}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Template */}
+      <div className="mb-6 flex flex-col gap-1.5">
+        <label className="text-sm font-medium text-foreground">Template *</label>
+        <select
+          value={selectedTemplate}
+          onChange={(e) => handleTemplateChange(e.target.value)}
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition appearance-none"
+        >
+          <option value="">Sélectionne un template…</option>
+          {templates.map((t) => (
+            <option key={t.id} value={t.id}>{t.title}</option>
+          ))}
+        </select>
       </div>
 
       {/* Offres */}

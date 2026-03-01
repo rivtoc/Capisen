@@ -19,12 +19,20 @@ interface OffreInfo {
 
 type Message = { role: "user" | "assistant"; content: string };
 
+interface SenderInfo {
+  full_name: string;
+  role: string;
+  pole: string;
+}
+
 interface InitialBody {
-  contact: ContactInfo;
+  contact?: ContactInfo;
+  contacts?: ContactInfo[];
   template: TemplateInfo;
   offres: OffreInfo[];
   context: string;
   mentionedContacts?: ContactInfo[];
+  sender?: SenderInfo;
 }
 
 interface RefinementBody {
@@ -37,8 +45,21 @@ const SYSTEM_PROMPT = `Tu es l'assistant de rédaction de Capisen, la Junior-Ent
 Tu rédiges des mails professionnels en français, au nom de Capisen.
 Quand on te demande de modifier un mail existant, fournis directement le mail révisé et complet, sans explication ni commentaire autour.`;
 
+const POLE_LABELS: Record<string, string> = {
+  secretariat: "Secrétariat", tresorerie: "Trésorerie", rh_event: "RH & Événements",
+  communication: "Communication", etude: "Étude", qualite: "Qualité", presidence: "Présidence",
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  normal: "Membre", responsable: "Responsable", presidence: "Présidence",
+};
+
 function buildInitialPrompt(body: InitialBody): string {
-  const { contact, template, offres, context, mentionedContacts } = body;
+  const { contact, contacts, template, offres, context, mentionedContacts, sender } = body;
+
+  // Support both single contact (legacy) and contacts array
+  const recipients: ContactInfo[] =
+    contacts && contacts.length > 0 ? contacts : contact ? [contact] : [];
 
   const offresText =
     offres && offres.length > 0
@@ -58,11 +79,36 @@ function buildInitialPrompt(body: InitialBody): string {
           .join("\n")
       : null;
 
-  return `**Contact destinataire :**
-- Nom : ${contact.full_name}
-- Entreprise : ${contact.company ?? "Non renseignée"}
-- Poste : ${contact.job_title ?? "Non renseigné"}
-- Email : ${contact.email ?? "Non renseigné"}
+  const senderBlock = sender
+    ? `**Expéditeur (toi) :**
+- Nom : ${sender.full_name}
+- Rôle au sein de Capisen : ${ROLE_LABELS[sender.role] ?? sender.role}
+- Pôle : ${POLE_LABELS[sender.pole] ?? sender.pole}
+Signe le mail avec ton prénom ou ton nom complet selon le niveau de formalité, et adapte le ton à ton rôle.
+
+`
+    : "";
+
+  let recipientBlock: string;
+  if (recipients.length === 1) {
+    const c = recipients[0];
+    recipientBlock = `**Contact destinataire :**
+- Nom : ${c.full_name}
+- Entreprise : ${c.company ?? "Non renseignée"}
+- Poste : ${c.job_title ?? "Non renseigné"}
+- Email : ${c.email ?? "Non renseigné"}`;
+  } else {
+    recipientBlock = `**Contacts destinataires (${recipients.length} personnes) :**
+${recipients
+  .map((c) => {
+    const details = [c.job_title, c.company].filter(Boolean).join(", ");
+    return `- ${c.full_name}${details ? ` (${details})` : ""}`;
+  })
+  .join("\n")}
+Adresse le mail à tous les destinataires de façon appropriée.`;
+  }
+
+  return `${senderBlock}${recipientBlock}
 
 **Type de mail : ${template.title}**
 ${template.context ? `Instructions spécifiques : ${template.context}\n` : ""}
@@ -74,8 +120,8 @@ ${context || "Aucun contexte supplémentaire."}
 ${mentionedText ? `\n**Profils des personnes mentionnées dans le contexte :**\n${mentionedText}\n(Utilise ces informations si elles sont pertinentes pour personnaliser le mail.)` : ""}
 Rédige maintenant le mail complet avec :
 1. L'objet du mail (préfixé par "Objet : ")
-2. La formule d'ouverture personnalisée
-3. Le corps du message, professionnel et adapté au contact
+2. La formule d'ouverture personnalisée (adaptée à ${recipients.length > 1 ? "plusieurs destinataires" : "ce destinataire"})
+3. Le corps du message, professionnel et adapté au(x) contact(s)
 4. La formule de clôture et la signature "L'équipe Capisen"
 
 Le mail doit être en français, professionnel mais accessible, et donner envie de répondre.`;
@@ -106,7 +152,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } else {
     // Mode génération initiale — on construit le premier message depuis le contexte
     const initial = body as InitialBody;
-    if (!initial.contact || !initial.template) {
+    const hasContact = (initial.contacts && initial.contacts.length > 0) || initial.contact;
+    if (!hasContact || !initial.template) {
       return res.status(400).json({ error: "Contact et template sont requis." });
     }
     messages = [{ role: "user", content: buildInitialPrompt(initial) }];
