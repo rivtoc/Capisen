@@ -32,7 +32,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeView, setActiveView, profile, isOpen, onClose }: SidebarProps) => {
-  const [openMenus, setOpenMenus] = useState<Set<string>>(new Set(["mails"]));
+  const [openMenus, setOpenMenus] = useState<Set<string>>(new Set());
 
   const toggleMenu = (key: string) => {
     setOpenMenus((prev) => {
@@ -54,23 +54,8 @@ const Sidebar = ({ activeView, setActiveView, profile, isOpen, onClose }: Sideba
     icon: <Building2 size={15} />,
   }));
 
-  // Supervision : présidence voit tous les pôles, responsable voit seulement le sien
+  // Supervision : présidence et responsables uniquement
   const supervisionVisible = isPresidence || isResponsable;
-  const supervisionSubItems: SubItem[] = isPresidence
-    ? POLE_OPTIONS.map((p) => ({
-        key: `supervision/${p.value}`,
-        label: p.label,
-        icon: <Building2 size={15} />,
-      }))
-    : isResponsable && userPole
-    ? [
-        {
-          key: `supervision/${userPole}`,
-          label: POLE_OPTIONS.find((p) => p.value === userPole)?.label ?? userPole,
-          icon: <Building2 size={15} />,
-        },
-      ]
-    : [];
 
   // Études : accessible aux pôles présidence, étude, qualité
   const etudesVisible =
@@ -88,7 +73,6 @@ const Sidebar = ({ activeView, setActiveView, profile, isOpen, onClose }: Sideba
       label: "Supervision",
       icon: <BarChart3 size={18} />,
       hidden: !supervisionVisible,
-      children: supervisionSubItems,
     },
     {
       key: "mails",

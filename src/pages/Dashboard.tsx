@@ -9,7 +9,7 @@ import MailContacts from "@/components/dashboard/mails/MailContacts";
 import MailTemplates from "@/components/dashboard/mails/MailTemplates";
 import MailOffres from "@/components/dashboard/mails/MailOffres";
 import MailHistory from "@/components/dashboard/mails/MailHistory";
-import SupervisionPole from "@/components/dashboard/supervision/SupervisionPole";
+import SupervisionGlobal from "@/components/dashboard/supervision/SupervisionGlobal";
 import FormationsPole from "@/components/dashboard/formations/FormationsPole";
 import EtudesGenerer from "@/components/dashboard/etudes/EtudesGenerer";
 import EtudesHistorique from "@/components/dashboard/etudes/EtudesHistorique";
@@ -20,7 +20,9 @@ import type { PoleType } from "@/lib/db-types";
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const [activeView, setActiveView] = useState("home");
+  const [activeView, setActiveView] = useState(
+    () => localStorage.getItem("capisen_activeView") ?? "home"
+  );
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleSignOut = async () => {
@@ -31,15 +33,15 @@ const Dashboard = () => {
   // Sur mobile, ferme le sidebar après navigation
   const handleSetActiveView = (view: string) => {
     setActiveView(view);
+    localStorage.setItem("capisen_activeView", view);
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
   };
 
   const renderContent = () => {
-    if (activeView.startsWith("supervision/")) {
-      const pole = activeView.split("/")[1] as PoleType;
-      return <SupervisionPole pole={pole} />;
+    if (activeView === "supervision") {
+      return <SupervisionGlobal />;
     }
 
     if (activeView.startsWith("formations/")) {
