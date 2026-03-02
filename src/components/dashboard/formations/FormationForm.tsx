@@ -345,7 +345,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
       </div>
 
       {/* Infos générales */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 space-y-4">
+      <div className="bg-card border border-border rounded-2xl p-6 mb-6 space-y-4">
         <h3 className="text-sm font-semibold text-foreground">Informations générales</h3>
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-medium text-foreground">Titre *</label>
@@ -354,7 +354,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ex : Initiation à la prospection commerciale"
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -366,7 +366,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             placeholder="Décrivez l'objectif de cette formation…"
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
+            className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
           />
         </div>
       </div>
@@ -379,7 +379,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
           </h3>
           <button
             onClick={addStep}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors"
           >
             <Plus size={12} />
             Ajouter une étape
@@ -387,22 +387,22 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
         </div>
 
         {steps.map((step, index) => (
-          <div key={index} className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
+          <div key={index} className="bg-card border border-border rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Étape {index + 1}
               </span>
               <div className="flex items-center gap-1">
                 <button onClick={() => moveStep(index, -1)} disabled={index === 0}
-                  className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors" title="Monter">
+                  className="p-1 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Monter">
                   <ChevronUp size={14} className="text-muted-foreground" />
                 </button>
                 <button onClick={() => moveStep(index, 1)} disabled={index === steps.length - 1}
-                  className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors" title="Descendre">
+                  className="p-1 rounded hover:bg-muted disabled:opacity-30 transition-colors" title="Descendre">
                   <ChevronDown size={14} className="text-muted-foreground" />
                 </button>
                 <button onClick={() => removeStep(index)} disabled={steps.length === 1}
-                  className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 disabled:opacity-30 transition-colors" title="Supprimer">
+                  className="p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-500 disabled:opacity-30 transition-colors" title="Supprimer">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -413,7 +413,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
               <input type="text" value={step.title}
                 onChange={(e) => updateStep(index, { title: e.target.value })}
                 placeholder="Ex : Comprendre les bases de la prospection"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition" />
+                className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition" />
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -423,7 +423,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
               <textarea value={step.description}
                 onChange={(e) => updateStep(index, { description: e.target.value })}
                 rows={4} placeholder="Instructions, explications, consignes à reproduire…"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition" />
+                className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition" />
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -433,7 +433,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
               <input type="url" value={step.video_url}
                 onChange={(e) => updateStep(index, { video_url: e.target.value })}
                 placeholder="https://youtu.be/… ou https://vimeo.com/…"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition" />
+                className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition" />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -442,11 +442,11 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
               </label>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => updateStep(index, { requires_file: !step.requires_file })}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border transition-colors ${step.requires_file ? "bg-black text-white border-black" : "bg-white text-foreground border-gray-200 hover:border-gray-400"}`}>
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border transition-colors ${step.requires_file ? "bg-foreground text-background border-foreground" : "bg-card text-foreground border-border hover:border-foreground/40"}`}>
                   <Upload size={13} /> Fichier
                 </button>
                 <button type="button" onClick={() => updateStep(index, { requires_text: !step.requires_text })}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border transition-colors ${step.requires_text ? "bg-black text-white border-black" : "bg-white text-foreground border-gray-200 hover:border-gray-400"}`}>
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm border transition-colors ${step.requires_text ? "bg-foreground text-background border-foreground" : "bg-card text-foreground border-border hover:border-foreground/40"}`}>
                   <FileText size={13} /> Réponse textuelle
                 </button>
               </div>
@@ -459,7 +459,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
               {step.existingDocuments.length > 0 && (
                 <div className="flex flex-col gap-1">
                   {step.existingDocuments.map((doc) => (
-                    <div key={doc.id} className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                    <div key={doc.id} className="flex items-center gap-2 px-3 py-2 bg-muted/40 border border-border rounded-lg text-sm">
                       <FileText size={14} className="text-muted-foreground shrink-0" />
                       <span className="flex-1 truncate text-foreground">{doc.file_name}</span>
                       <button onClick={() => removeExistingDoc(index, doc.id)} className="text-muted-foreground hover:text-red-600 transition-colors">
@@ -472,7 +472,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
               {step.newFiles.length > 0 && (
                 <div className="flex flex-col gap-1">
                   {step.newFiles.map((f, fi) => (
-                    <div key={fi} className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-lg text-sm">
+                    <div key={fi} className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-sm">
                       <FileText size={14} className="text-blue-500 shrink-0" />
                       <span className="flex-1 truncate text-foreground">{f.name}</span>
                       <button onClick={() => removeNewFile(index, fi)} className="text-muted-foreground hover:text-red-600 transition-colors">
@@ -482,7 +482,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
                   ))}
                 </div>
               )}
-              <label className="flex items-center gap-2 cursor-pointer px-3 py-2.5 border border-dashed border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+              <label className="flex items-center gap-2 cursor-pointer px-3 py-2.5 border border-dashed border-border rounded-xl hover:bg-muted/40 transition-colors">
                 <Upload size={14} className="text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Ajouter des fichiers…</span>
                 <input type="file" multiple className="hidden"
@@ -493,7 +493,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
         ))}
 
         <button onClick={addStep}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-gray-200 rounded-2xl text-sm text-muted-foreground hover:bg-gray-50 hover:text-foreground transition-colors">
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-border rounded-2xl text-sm text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors">
           <Plus size={14} />
           Ajouter une étape
         </button>
@@ -505,29 +505,29 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
           type="button"
           onClick={() => setHasQuiz(!hasQuiz)}
           className={`w-full flex items-center gap-3 px-5 py-4 rounded-2xl border text-left transition-colors ${
-            hasQuiz ? "bg-black text-white border-black" : "bg-white text-foreground border-gray-200 hover:border-gray-400"
+            hasQuiz ? "bg-foreground text-background border-foreground" : "bg-card text-foreground border-border hover:border-foreground/40"
           }`}
         >
           <Trophy size={16} className="shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-semibold">Quiz de fin de parcours</p>
-            <p className={`text-xs mt-0.5 ${hasQuiz ? "text-white/70" : "text-muted-foreground"}`}>
+            <p className={`text-xs mt-0.5 ${hasQuiz ? "text-background/70" : "text-muted-foreground"}`}>
               {hasQuiz
                 ? "Activé — les membres répondent au quiz après avoir terminé toutes les étapes"
                 : "Optionnel — ajoutez des questions à choix multiples à la fin de la formation"}
             </p>
           </div>
           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-            hasQuiz ? "bg-white border-white" : "border-gray-300"
+            hasQuiz ? "bg-background border-background" : "border-border"
           }`}>
-            {hasQuiz && <div className="w-2.5 h-2.5 rounded-full bg-black" />}
+            {hasQuiz && <div className="w-2.5 h-2.5 rounded-full bg-foreground" />}
           </div>
         </button>
 
         {hasQuiz && (
           <div className="mt-4 space-y-4">
             {quizQuestions.map((q, qi) => (
-              <div key={qi} className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
+              <div key={qi} className="bg-card border border-border rounded-2xl p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Question {qi + 1}
@@ -535,7 +535,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
                   <button
                     onClick={() => removeQuestion(qi)}
                     disabled={quizQuestions.length === 1}
-                    className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 disabled:opacity-30 transition-colors"
+                    className="p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-500 disabled:opacity-30 transition-colors"
                     title="Supprimer"
                   >
                     <Trash2 size={14} />
@@ -549,7 +549,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
                     value={q.question}
                     onChange={(e) => updateQuestion(qi, { question: e.target.value })}
                     placeholder="Ex : Qu'est-ce que la prospection à froid ?"
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
+                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
                   />
                 </div>
 
@@ -565,22 +565,22 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
                         onClick={() => setCorrectChoice(qi, ci)}
                         title="Marquer comme bonne réponse"
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                          c.is_correct ? "bg-black border-black" : "border-gray-300 hover:border-gray-500"
+                          c.is_correct ? "bg-foreground border-foreground" : "border-border hover:border-foreground/50"
                         }`}
                       >
-                        {c.is_correct && <div className="w-2 h-2 rounded-full bg-white" />}
+                        {c.is_correct && <div className="w-2 h-2 rounded-full bg-card" />}
                       </button>
                       <input
                         type="text"
                         value={c.label}
                         onChange={(e) => updateChoice(qi, ci, { label: e.target.value })}
                         placeholder={`Réponse ${ci + 1}`}
-                        className="flex-1 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
+                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
                       />
                       <button
                         onClick={() => removeChoice(qi, ci)}
                         disabled={q.choices.length <= 2}
-                        className="p-1 rounded hover:bg-red-50 text-muted-foreground hover:text-red-600 disabled:opacity-30 transition-colors"
+                        className="p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-500 disabled:opacity-30 transition-colors"
                       >
                         <X size={12} />
                       </button>
@@ -601,7 +601,7 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
 
             <button
               onClick={addQuestion}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-gray-200 rounded-2xl text-sm text-muted-foreground hover:bg-gray-50 hover:text-foreground transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-border rounded-2xl text-sm text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
             >
               <Plus size={14} />
               Ajouter une question
@@ -614,12 +614,12 @@ const FormationForm = ({ pole, formation, onBack, onSaved }: Props) => {
 
       <div className="flex gap-3">
         <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors">
+          className="flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-sm font-semibold rounded-xl hover:bg-foreground/90 disabled:opacity-50 transition-colors">
           {saving && <Loader2 size={14} className="animate-spin" />}
           {formation ? "Enregistrer" : "Créer la formation"}
         </button>
         <button onClick={onBack}
-          className="px-5 py-2.5 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+          className="px-5 py-2.5 text-sm border border-border rounded-xl hover:bg-muted/40 transition-colors">
           Annuler
         </button>
       </div>

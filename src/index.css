@@ -32,11 +32,11 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
     --ring: 0 0% 0%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     /* Custom CAPISEN accent tokens */
     --surface-elevated: 220 20% 98%;
@@ -48,40 +48,41 @@
     --gradient-accent: linear-gradient(135deg, hsl(210 100% 60%) 0%, hsl(260 60% 65%) 100%);
   }
 
-  .dark {
-    --background: 220 20% 8%;
-    --foreground: 0 0% 96%;
+  [data-theme="dark"] {
+    --background: 222 20% 10%;
+    --foreground: 0 0% 93%;
 
-    --card: 220 20% 10%;
-    --card-foreground: 0 0% 96%;
+    --card: 222 20% 13%;
+    --card-foreground: 0 0% 93%;
 
-    --popover: 220 20% 10%;
-    --popover-foreground: 0 0% 96%;
+    --popover: 222 20% 13%;
+    --popover-foreground: 0 0% 93%;
 
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 0 0% 92%;
+    --primary-foreground: 0 0% 8%;
 
-    --secondary: 220 20% 15%;
-    --secondary-foreground: 0 0% 96%;
+    --secondary: 222 18% 18%;
+    --secondary-foreground: 0 0% 88%;
 
-    --muted: 220 20% 15%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 222 18% 17%;
+    --muted-foreground: 0 0% 55%;
 
-    --accent: 260 40% 20%;
-    --accent-foreground: 260 60% 80%;
+    --accent: 222 18% 18%;
+    --accent-foreground: 0 0% 88%;
 
-    --destructive: 0 62% 40%;
+    --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 0 0% 0%;
+    --border: 222 15% 21%;
+    --input: 222 15% 21%;
+    --ring: 0 0% 75%;
 
-    --surface-elevated: 220 20% 12%;
-    --text-subtle: 0 0% 55%;
+    --surface-elevated: 222 20% 15%;
+    --text-subtle: 0 0% 50%;
     --accent-blue: 210 100% 65%;
     --accent-violet: 260 60% 70%;
     --accent-green: 160 60% 50%;
+    --gradient-hero: linear-gradient(135deg, hsl(222 20% 14%) 0%, hsl(260 20% 16%) 50%, hsl(210 25% 14%) 100%);
   }
 }
 
@@ -193,3 +194,7 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-400 { animation-delay: 400ms; }
 }
+
+/* Sidebar – white in day mode, near-black in dark mode */
+.capisen-sidebar { background-color: hsl(var(--background)); border-right: 1px solid hsl(var(--border)); }
+[data-theme="dark"] .capisen-sidebar { background-color: #07080f; border-right: none; }

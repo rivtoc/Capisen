@@ -320,7 +320,7 @@ const SupervisionGlobal = () => {
         {loadingDetail ? (
           <div className="text-center py-12 text-muted-foreground">Chargement…</div>
         ) : selected.enrollments.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
+          <div className="text-center py-12 text-muted-foreground bg-card border border-border rounded-2xl">
             <p className="text-sm">Ce membre n'est inscrit à aucune formation.</p>
           </div>
         ) : (
@@ -329,7 +329,7 @@ const SupervisionGlobal = () => {
               const completed = enrollment.completedStepIds.size;
               const total = enrollment.steps.length;
               return (
-                <div key={enrollment.id} className="bg-white border border-gray-200 rounded-2xl p-5">
+                <div key={enrollment.id} className="bg-card border border-border rounded-2xl p-5">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold text-foreground text-sm">
                       {enrollment.formationTitle}
@@ -339,9 +339,9 @@ const SupervisionGlobal = () => {
                     </span>
                   </div>
                   {total > 0 && (
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 mb-4">
+                    <div className="w-full bg-muted rounded-full h-1.5 mb-4">
                       <div
-                        className="bg-black rounded-full h-1.5 transition-all"
+                        className="bg-foreground rounded-full h-1.5 transition-all"
                         style={{ width: `${(completed / total) * 100}%` }}
                       />
                     </div>
@@ -350,10 +350,10 @@ const SupervisionGlobal = () => {
                     <div className="mb-3">
                       <button
                         onClick={() => toggleQuizDetail(enrollment.id)}
-                        className="w-full flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-100 rounded-xl hover:bg-green-100 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 bg-green-500/10 border border-green-500/20 rounded-xl hover:bg-green-500/15 transition-colors"
                       >
                         <Trophy size={13} className="text-green-600 shrink-0" />
-                        <span className="text-xs text-green-700 font-medium flex-1 text-left">
+                        <span className="text-xs text-green-600 dark:text-green-400 font-medium flex-1 text-left">
                           Quiz : {enrollment.quizAttempt.score}/{enrollment.quizAttempt.total}
                         </span>
                         {expandedQuizIds.has(enrollment.id)
@@ -368,7 +368,7 @@ const SupervisionGlobal = () => {
                             const correct_choice = q.choices.find((c) => c.is_correct);
                             const was_correct = selected_choice && correct_choice?.id === selected_choice;
                             return (
-                              <div key={qi} className="bg-gray-50 rounded-xl p-3">
+                              <div key={qi} className="bg-muted/40 rounded-xl p-3">
                                 <p className="text-xs font-medium text-foreground mb-2">
                                   {qi + 1}. {q.question}
                                 </p>
@@ -377,7 +377,7 @@ const SupervisionGlobal = () => {
                                     const isSelected = c.id === selected_choice;
                                     const isCorrect = c.is_correct;
                                     let cls = "text-muted-foreground";
-                                    let dot = "bg-gray-200";
+                                    let dot = "bg-muted";
                                     if (isSelected && isCorrect) {
                                       cls = "text-green-700 font-medium";
                                       dot = "bg-green-500";
@@ -418,8 +418,8 @@ const SupervisionGlobal = () => {
                             <div
                               className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
                                 isDone
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-muted-foreground"
+                                  ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                                  : "bg-muted text-muted-foreground"
                               }`}
                             >
                               {isDone ? (
@@ -439,7 +439,7 @@ const SupervisionGlobal = () => {
                             </span>
                           </div>
                           {answer && (
-                            <div className="ml-7 mt-1 px-3 py-2 bg-gray-50 rounded-lg text-xs text-muted-foreground">
+                            <div className="ml-7 mt-1 px-3 py-2 bg-muted/40 rounded-lg text-xs text-muted-foreground">
                               <span className="font-medium text-foreground">Réponse :</span>{" "}
                               {answer}
                             </div>
@@ -450,7 +450,7 @@ const SupervisionGlobal = () => {
                                 <button
                                   key={sub.id}
                                   onClick={() => handleDownload(sub.storage_path, sub.file_name)}
-                                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700 hover:bg-blue-100 transition-colors w-full text-left min-w-0"
+                                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-500/15 transition-colors w-full text-left min-w-0"
                                 >
                                   <FileText size={11} className="shrink-0" />
                                   <span className="flex-1 truncate">{sub.file_name}</span>
@@ -487,7 +487,7 @@ const SupervisionGlobal = () => {
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : members.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
+        <div className="text-center py-12 text-muted-foreground bg-card border border-border rounded-2xl">
           <p className="text-sm">Aucun membre trouvé.</p>
         </div>
       ) : (
@@ -498,7 +498,7 @@ const SupervisionGlobal = () => {
               <div
                 key={member.id}
                 onClick={() => handleSelectMember(member)}
-                className="bg-white border border-gray-200 rounded-2xl p-5 cursor-pointer hover:border-gray-300 transition-colors flex flex-col gap-3"
+                className="bg-card border border-border rounded-2xl p-5 cursor-pointer hover:border-foreground/20 transition-colors flex flex-col gap-3"
               >
                 <div>
                   <p className="font-semibold text-foreground text-sm">{member.full_name}</p>
@@ -520,9 +520,9 @@ const SupervisionGlobal = () => {
                             {s.completedSteps}/{s.totalSteps}
                           </span>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-1">
+                        <div className="w-full bg-muted rounded-full h-1">
                           <div
-                            className="bg-black rounded-full h-1 transition-all"
+                            className="bg-foreground rounded-full h-1 transition-all"
                             style={{
                               width: `${
                                 s.totalSteps > 0

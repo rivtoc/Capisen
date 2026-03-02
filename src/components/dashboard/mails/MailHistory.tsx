@@ -93,7 +93,7 @@ const MailHistory = () => {
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : history.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
+        <div className="text-center py-12 text-muted-foreground bg-card border border-border rounded-2xl">
           <p className="text-sm">Aucun contenu généré pour l'instant.</p>
         </div>
       ) : (
@@ -109,15 +109,15 @@ const MailHistory = () => {
             const isSavedTemplate = savedTemplateId === item.id;
 
             return (
-              <div key={item.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+              <div key={item.id} className="bg-card border border-border rounded-2xl overflow-hidden">
                 <button
                   onClick={() => setExpanded(isOpen ? null : item.id)}
-                  className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-muted/40 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       {label && (
-                        <span className="text-xs bg-gray-100 text-muted-foreground px-2 py-0.5 rounded-full shrink-0">
+                        <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full shrink-0">
                           {label}
                         </span>
                       )}
@@ -153,12 +153,12 @@ const MailHistory = () => {
                 </button>
 
                 {isOpen && item.result && (
-                  <div className="px-5 pb-5 border-t border-gray-100">
+                  <div className="px-5 pb-5 border-t border-border">
                     {/* Actions */}
                     <div className="flex items-center gap-2 mt-3 mb-2 flex-wrap">
                       <button
                         onClick={() => handleCopy(item.id, item.result!)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-muted/40 transition-colors"
                       >
                         {copied === item.id ? <Check size={12} /> : <Copy size={12} />}
                         {copied === item.id ? "Copié !" : "Copier"}
@@ -167,7 +167,7 @@ const MailHistory = () => {
                       {!isCreatingTemplate && !isSavedTemplate && (
                         <button
                           onClick={() => openCreateTemplate(item)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-muted/40 transition-colors"
                         >
                           <BookmarkPlus size={12} />
                           Créer un template
@@ -192,7 +192,7 @@ const MailHistory = () => {
                           onKeyDown={(e) => e.key === "Enter" && handleSaveTemplate(item)}
                           placeholder="Nom du template…"
                           autoFocus
-                          className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
+                          className="flex-1 px-3 py-1.5 text-sm border border-border rounded-lg bg-muted/40 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
                         />
                         <button
                           onClick={() => handleSaveTemplate(item)}
@@ -208,14 +208,14 @@ const MailHistory = () => {
                         </button>
                         <button
                           onClick={() => setTemplateTitleFor(null)}
-                          className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                          className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-muted/40 transition-colors"
                         >
                           Annuler
                         </button>
                       </div>
                     )}
 
-                    <pre className="text-sm text-foreground whitespace-pre-wrap font-sans bg-gray-50 rounded-xl p-4 leading-relaxed">
+                    <pre className="text-sm text-foreground whitespace-pre-wrap font-sans bg-muted/40 rounded-xl p-4 leading-relaxed">
                       {item.result}
                     </pre>
                   </div>

@@ -103,16 +103,16 @@ const SettingsMembers = () => {
           placeholder="Rechercher un membre…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
+          className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-xl bg-card focus:outline-none focus:ring-2 focus:ring-black/10"
         />
       </div>
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden overflow-x-auto">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden overflow-x-auto">
           <table className="w-full text-sm min-w-[560px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted/40 border-b border-border">
               <tr>
                 <th className="text-left px-5 py-3 font-medium text-foreground">Membre</th>
                 <th className="text-left px-5 py-3 font-medium text-foreground">Pôle</th>
@@ -120,7 +120,7 @@ const SettingsMembers = () => {
                 <th className="px-5 py-3 w-20"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-border">
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-5 py-8 text-center text-muted-foreground text-sm">
@@ -135,10 +135,10 @@ const SettingsMembers = () => {
                   const isSaved = saved[member.id];
 
                   return (
-                    <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={member.id} className="hover:bg-muted/40 transition-colors">
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                          <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
                             <span className="text-xs font-bold text-gray-500 uppercase">
                               {member.full_name.charAt(0)}
                             </span>
@@ -151,7 +151,7 @@ const SettingsMembers = () => {
                         <select
                           value={edit.pole}
                           onChange={(e) => setEdit(member.id, "pole", e.target.value)}
-                          className="text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-black/10 cursor-pointer"
+                          className="text-sm border border-border rounded-lg px-2.5 py-1.5 bg-card focus:outline-none focus:ring-2 focus:ring-black/10 cursor-pointer"
                         >
                           {POLE_OPTIONS.map((p) => (
                             <option key={p.value} value={p.value}>
@@ -165,7 +165,7 @@ const SettingsMembers = () => {
                         <select
                           value={edit.role}
                           onChange={(e) => setEdit(member.id, "role", e.target.value)}
-                          className="text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-black/10 cursor-pointer"
+                          className="text-sm border border-border rounded-lg px-2.5 py-1.5 bg-card focus:outline-none focus:ring-2 focus:ring-black/10 cursor-pointer"
                         >
                           {MEMBER_ROLES.map((r) => (
                             <option key={r} value={r}>

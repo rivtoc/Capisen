@@ -30,7 +30,7 @@ const EtudesGenerer = () => {
       </div>
 
       {/* Formulaire (front uniquement) */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-5">
+      <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
         <h3 className="text-sm font-semibold text-foreground">Informations de l'étude</h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -40,7 +40,7 @@ const EtudesGenerer = () => {
               type="text"
               disabled
               placeholder="Ex : Étude MarketPro 2025"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground cursor-not-allowed"
             />
           </div>
 
@@ -50,7 +50,7 @@ const EtudesGenerer = () => {
               type="text"
               disabled
               placeholder="Ex : CAP-2025-042"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground cursor-not-allowed"
             />
           </div>
 
@@ -60,7 +60,7 @@ const EtudesGenerer = () => {
               type="text"
               disabled
               placeholder="Nom de l'entreprise cliente"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground cursor-not-allowed"
             />
           </div>
 
@@ -70,7 +70,7 @@ const EtudesGenerer = () => {
               type="text"
               disabled
               placeholder="Prénom Nom"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground cursor-not-allowed"
             />
           </div>
         </div>
@@ -84,7 +84,7 @@ const EtudesGenerer = () => {
             {DOCUMENT_TYPES.map((doc) => (
               <label
                 key={doc.id}
-                className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                className="flex items-start gap-3 p-3 rounded-xl border border-border bg-muted/40 cursor-not-allowed opacity-60"
               >
                 <input type="checkbox" disabled className="mt-0.5" />
                 <div>
@@ -101,7 +101,7 @@ const EtudesGenerer = () => {
           <label className="text-sm font-medium text-foreground block mb-2">
             Pièces jointes <span className="text-muted-foreground font-normal">(optionnel)</span>
           </label>
-          <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center opacity-60 cursor-not-allowed">
+          <div className="border-2 border-dashed border-border rounded-xl p-6 text-center opacity-60 cursor-not-allowed">
             <Upload size={20} className="text-muted-foreground mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Glissez vos fichiers ici</p>
             <p className="text-xs text-muted-foreground mt-1">PDF, Word, Excel — max 10 Mo</p>
@@ -118,7 +118,7 @@ const EtudesGenerer = () => {
       </div>
 
       {/* Aperçu des fichiers générés */}
-      <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-6">
+      <div className="mt-6 bg-card border border-border rounded-2xl p-6">
         <div className="flex items-center gap-2 mb-4">
           <Folder size={16} className="text-muted-foreground" />
           <h3 className="text-sm font-semibold text-foreground">Fichiers générés</h3>

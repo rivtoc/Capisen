@@ -253,7 +253,7 @@ const MailContacts = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-border rounded-xl hover:bg-muted/40 transition-colors"
           >
             <Upload size={16} />
             Importer LinkedIn CSV
@@ -283,7 +283,7 @@ const MailContacts = () => {
           placeholder="Nom, prénom, entreprise, poste…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
+          className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-xl bg-card focus:outline-none focus:ring-2 focus:ring-black/10"
         />
         {search && (
           <button
@@ -324,7 +324,7 @@ const MailContacts = () => {
 
       {/* Aperçu avant import */}
       {parsedContacts && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">
@@ -338,9 +338,9 @@ const MailContacts = () => {
           </div>
 
           {/* Aperçu des 5 premiers */}
-          <div className="border border-gray-100 rounded-xl overflow-hidden mb-4">
+          <div className="border border-border rounded-xl overflow-hidden mb-4">
             <table className="w-full text-xs">
-              <thead className="bg-gray-50">
+              <thead className="bg-muted/40">
                 <tr>
                   <th className="text-left px-3 py-2 font-medium text-foreground">Nom</th>
                   <th className="text-left px-3 py-2 font-medium text-foreground">Entreprise</th>
@@ -348,9 +348,9 @@ const MailContacts = () => {
                   <th className="text-left px-3 py-2 font-medium text-foreground">Email</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {parsedContacts.slice(0, 5).map((c, i) => (
-                  <tr key={i} className="bg-white">
+                  <tr key={i} className="bg-card">
                     <td className="px-3 py-2 font-medium text-foreground">{c.full_name}</td>
                     <td className="px-3 py-2 text-muted-foreground">{c.company ?? "—"}</td>
                     <td className="px-3 py-2 text-muted-foreground">{c.job_title ?? "—"}</td>
@@ -360,7 +360,7 @@ const MailContacts = () => {
               </tbody>
             </table>
             {parsedContacts.length > 5 && (
-              <p className="text-xs text-center text-muted-foreground py-2 bg-gray-50 border-t border-gray-100">
+              <p className="text-xs text-center text-muted-foreground py-2 bg-muted/40 border-t border-border">
                 … et {parsedContacts.length - 5} autre{parsedContacts.length - 5 !== 1 ? "s" : ""}
               </p>
             )}
@@ -377,7 +377,7 @@ const MailContacts = () => {
             </button>
             <button
               onClick={cancelImport}
-              className="px-4 py-2 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm border border-border rounded-xl hover:bg-muted/40 transition-colors"
             >
               Annuler
             </button>
@@ -387,7 +387,7 @@ const MailContacts = () => {
 
       {/* Formulaire ajout/édition manuel */}
       {showForm && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-foreground">
               {editId ? "Modifier le contact" : "Nouveau contact"}
@@ -406,7 +406,7 @@ const MailContacts = () => {
                   value={(form[key] as string) ?? ""}
                   onChange={(e) => setField(key, e.target.value)}
                   placeholder={placeholder}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
                 />
               </div>
             ))}
@@ -419,7 +419,7 @@ const MailContacts = () => {
               onChange={(e) => setField("notes", e.target.value)}
               placeholder="Informations complémentaires…"
               rows={2}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
             />
           </div>
 
@@ -436,7 +436,7 @@ const MailContacts = () => {
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="px-4 py-2 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-sm border border-border rounded-xl hover:bg-muted/40 transition-colors"
             >
               Annuler
             </button>
@@ -448,14 +448,14 @@ const MailContacts = () => {
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : contacts.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
+        <div className="text-center py-12 text-muted-foreground bg-card border border-border rounded-2xl">
           <p className="text-sm">Aucun contact pour l'instant. Ajoutez-en un ou importez depuis LinkedIn.</p>
         </div>
       ) : (
         <>
-          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden overflow-x-auto">
+          <div className="bg-card border border-border rounded-2xl overflow-hidden overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted/40 border-b border-border">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium text-foreground">Nom</th>
                   <th className="text-left px-4 py-3 font-medium text-foreground">Entreprise</th>
@@ -464,7 +464,7 @@ const MailContacts = () => {
                   <th className="px-4 py-3 w-20"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground text-sm">
@@ -473,7 +473,7 @@ const MailContacts = () => {
                   </tr>
                 ) : (
                   filtered.map((c) => (
-                    <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={c.id} className="hover:bg-muted/40 transition-colors">
                       <td className="px-4 py-3 font-medium text-foreground">{c.full_name}</td>
                       <td className="px-4 py-3 text-muted-foreground">{c.company ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{c.job_title ?? "—"}</td>
@@ -482,7 +482,7 @@ const MailContacts = () => {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => openEdit(c)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground hover:text-foreground transition-colors"
+                            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                           >
                             <Pencil size={14} />
                           </button>

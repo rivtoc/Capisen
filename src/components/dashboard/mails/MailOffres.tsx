@@ -146,7 +146,7 @@ const MailOffres = () => {
     form?.type === "prestation" && form.editId === prestationId;
 
   const FormBlock = ({ onCancel }: { onCancel: () => void }) => (
-    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mt-3">
+    <div className="bg-muted/40 border border-border rounded-xl p-4 mt-3">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-medium text-foreground">Titre *</label>
@@ -156,7 +156,7 @@ const MailOffres = () => {
             onChange={(e) => setTitle(e.target.value)}
             autoFocus
             placeholder={form?.type === "offre" ? "Ex : Développement web" : "Ex : Site vitrine 5 pages"}
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
+            className="w-full px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
           />
         </div>
         <div className="flex flex-col gap-1.5">
@@ -168,7 +168,7 @@ const MailOffres = () => {
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             placeholder="Description courte…"
-            className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
+            className="w-full px-3 py-2 rounded-lg border border-border bg-card text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
           />
         </div>
       </div>
@@ -184,7 +184,7 @@ const MailOffres = () => {
         </button>
         <button
           onClick={onCancel}
-          className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-white transition-colors"
+          className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-card transition-colors"
         >
           Annuler
         </button>
@@ -212,7 +212,7 @@ const MailOffres = () => {
 
       {/* Formulaire nouvelle offre (global) */}
       {form?.type === "offre" && form.editId === null && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-foreground">Nouvelle offre</h3>
             <button onClick={() => setForm(null)}>
@@ -226,7 +226,7 @@ const MailOffres = () => {
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : offres.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
+        <div className="text-center py-12 text-muted-foreground bg-card border border-border rounded-2xl">
           <p className="text-sm">Aucune offre. Créez votre première offre ci-dessus.</p>
         </div>
       ) : (
@@ -234,7 +234,7 @@ const MailOffres = () => {
           {offres.map((o) => {
             const isOpen = expanded.has(o.id);
             return (
-              <div key={o.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+              <div key={o.id} className="bg-card border border-border rounded-2xl overflow-hidden">
                 {/* En-tête offre */}
                 <div className="flex items-center gap-3 px-5 py-4">
                   <button
@@ -252,7 +252,7 @@ const MailOffres = () => {
                         <p className="text-xs text-muted-foreground mt-0.5">{o.description}</p>
                       )}
                     </div>
-                    <span className="ml-2 shrink-0 text-xs text-muted-foreground bg-gray-100 px-2 py-0.5 rounded-full">
+                    <span className="ml-2 shrink-0 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
                       {o.prestations.length} prestation{o.prestations.length !== 1 ? "s" : ""}
                     </span>
                   </button>
@@ -260,7 +260,7 @@ const MailOffres = () => {
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => openEditOffre(o)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground hover:text-foreground transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                     >
                       <Pencil size={14} />
                     </button>
@@ -275,19 +275,19 @@ const MailOffres = () => {
 
                 {/* Formulaire modification offre */}
                 {isFormForOffre(o.id) && (
-                  <div className="px-5 pb-4 border-t border-gray-100">
+                  <div className="px-5 pb-4 border-t border-border">
                     <FormBlock onCancel={() => setForm(null)} />
                   </div>
                 )}
 
                 {/* Prestations (section dépliée) */}
                 {isOpen && !isFormForOffre(o.id) && (
-                  <div className="border-t border-gray-100 px-5 py-4">
+                  <div className="border-t border-border px-5 py-4">
                     {o.prestations.length > 0 && (
                       <div className="space-y-2 mb-3">
                         {o.prestations.map((p) => (
                           <div key={p.id}>
-                            <div className="flex items-start justify-between gap-3 pl-4 border-l-2 border-gray-200 py-1.5">
+                            <div className="flex items-start justify-between gap-3 pl-4 border-l-2 border-border py-1.5">
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium text-foreground">{p.title}</p>
                                 {p.description && (
@@ -297,7 +297,7 @@ const MailOffres = () => {
                               <div className="flex items-center gap-1 shrink-0">
                                 <button
                                   onClick={() => openEditPrestation(p)}
-                                  className="p-1 rounded-lg hover:bg-gray-100 text-muted-foreground hover:text-foreground transition-colors"
+                                  className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                   <Pencil size={13} />
                                 </button>

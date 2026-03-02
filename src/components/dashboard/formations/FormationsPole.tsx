@@ -82,7 +82,7 @@ const FormationsPole = ({ pole }: { pole: PoleType }) => {
         {canManage && (
           <button
             onClick={() => setView("create")}
-            className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-foreground text-background text-sm font-semibold rounded-xl hover:bg-foreground/90 transition-colors"
           >
             <Plus size={16} />
             Nouvelle formation
@@ -93,13 +93,13 @@ const FormationsPole = ({ pole }: { pole: PoleType }) => {
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : formations.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
+        <div className="text-center py-12 text-muted-foreground bg-card border border-border rounded-2xl">
           <BookOpen size={32} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm mb-1">Aucune formation disponible pour ce pôle.</p>
           {canManage && (
             <button
               onClick={() => setView("create")}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background text-sm font-semibold rounded-xl hover:bg-foreground/90 transition-colors"
             >
               <Plus size={14} />
               Créer la première formation
@@ -112,10 +112,10 @@ const FormationsPole = ({ pole }: { pole: PoleType }) => {
             <div
               key={f.id}
               onClick={() => { setSelected(f); setView("detail"); }}
-              className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col gap-3 cursor-pointer hover:border-gray-300 transition-colors"
+              className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 cursor-pointer hover:border-foreground/20 transition-colors"
             >
               <div className="flex items-start gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
                   <BookOpen size={16} className="text-muted-foreground" />
                 </div>
                 <h3 className="text-sm font-semibold text-foreground leading-snug pt-1">{f.title}</h3>
