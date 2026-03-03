@@ -198,3 +198,12 @@
 /* Sidebar – white in day mode, near-black in dark mode */
 .capisen-sidebar { background-color: hsl(var(--background)); border-right: 1px solid hsl(var(--border)); }
 [data-theme="dark"] .capisen-sidebar { background-color: #07080f; border-right: none; }
+
+/* Fix couleur de fond injectée par le navigateur lors de l'autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #f9fafb inset;
+  -webkit-text-fill-color: #1e1e1e;
+  transition: background-color 9999s ease-in-out 0s;
+}

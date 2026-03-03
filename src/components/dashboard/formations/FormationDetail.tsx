@@ -376,7 +376,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={onEdit}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-muted/40 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border text-foreground rounded-lg hover:bg-muted/40 transition-colors"
             >
               <Pencil size={12} />
               Modifier
@@ -538,7 +538,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                             href={step.video_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex items-center gap-2 px-4 py-3 bg-muted/40 border border-border rounded-xl text-sm text-blue-600 hover:underline"
+                            className="flex items-center gap-2 px-4 py-3 bg-muted/40 border border-border rounded-xl text-sm text-blue-600 dark:text-blue-400 hover:underline"
                           >
                             <Play size={14} />
                             Voir la vidéo
@@ -597,7 +597,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                             disabled={completed}
                             rows={4}
                             placeholder="Rédigez votre réponse ici…"
-                            className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition disabled:opacity-50"
+                            className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-foreground/10 focus:border-foreground/40 transition disabled:opacity-50"
                           />
                         )}
                       </div>

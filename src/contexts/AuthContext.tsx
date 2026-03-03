@@ -10,6 +10,9 @@ export interface UserProfile {
   pole: PoleType;
   role: MemberRole;
   avatar_url: string | null;
+  bio: string | null;
+  position: string | null;
+  linkedin_url: string | null;
 }
 
 interface AuthContextValue {
@@ -18,6 +21,7 @@ interface AuthContextValue {
   profile: UserProfile | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 1 heure en millisecondes
@@ -30,6 +34,7 @@ const AuthContext = createContext<AuthContextValue>({
   profile: null,
   loading: true,
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -59,7 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .insert({
           id: user.id,
           full_name: meta.full_name ?? "",
-          pole: meta.pole ?? "secretariat",
+          pole: meta.pole ?? "nouveau",
           role: "normal",
         })
         .select()
@@ -68,6 +73,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       setProfile(data as UserProfile | null);
     }
+  };
+
+  const refreshProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) await fetchProfile(user);
   };
 
   const signOut = async () => {
@@ -138,7 +148,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, signOut }}>
+    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

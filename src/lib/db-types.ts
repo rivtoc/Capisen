@@ -11,6 +11,7 @@ export const CONTENT_TYPES = [
 export type ContentType = (typeof CONTENT_TYPES)[number]["value"];
 
 export const POLE_OPTIONS = [
+  { value: "nouveau",       label: "En attente" },
   { value: "secretariat",   label: "Secrétariat" },
   { value: "tresorerie",    label: "Trésorerie" },
   { value: "rh_event",      label: "RH & Événements" },

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { POLE_OPTIONS, type PoleType } from "@/lib/db-types";
 import logo from "@/assets/logo-capisen.png";
 
 const ALLOWED_DOMAIN = "capisen.fr";
@@ -10,7 +9,6 @@ const SignUp = () => {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [pole, setPole] = useState<PoleType | "">("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +42,7 @@ const SignUp = () => {
       email,
       password,
       options: {
-        data: { full_name: fullName, pole, role: "normal" },
+        data: { full_name: fullName, pole: "nouveau", role: "normal" },
       },
     });
 
@@ -145,25 +143,6 @@ const SignUp = () => {
                 placeholder={`prenom.nom@${ALLOWED_DOMAIN}`}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
               />
-            </div>
-
-            {/* Pôle */}
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="pole" className="text-sm font-medium text-foreground">
-                Pôle
-              </label>
-              <select
-                id="pole"
-                required
-                value={pole}
-                onChange={(e) => setPole(e.target.value as PoleType)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition appearance-none"
-              >
-                <option value="" disabled>Sélectionne ton pôle…</option>
-                {POLE_OPTIONS.map((p) => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
-                ))}
-              </select>
             </div>
 
             {/* Mot de passe */}

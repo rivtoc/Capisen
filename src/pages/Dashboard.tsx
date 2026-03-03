@@ -17,8 +17,7 @@ import FormationsPole from "@/components/dashboard/formations/FormationsPole";
 import EtudesGenerer from "@/components/dashboard/etudes/EtudesGenerer";
 import EtudesHistorique from "@/components/dashboard/etudes/EtudesHistorique";
 import EtudesDocsTypes from "@/components/dashboard/etudes/EtudesDocsTypes";
-import SettingsMembers from "@/components/dashboard/settings/SettingsMembers";
-import SettingsProfile from "@/components/dashboard/settings/SettingsProfile";
+import SettingsPage from "@/components/dashboard/settings/SettingsPage";
 import type { PoleType } from "@/lib/db-types";
 
 const DashboardContent = () => {
@@ -44,6 +43,11 @@ const DashboardContent = () => {
   };
 
   const renderContent = () => {
+    // Membres sans pôle attribué : accès limité aux paramètres uniquement
+    if (profile?.pole === "nouveau" && !activeView.startsWith("settings")) {
+      return <SettingsPage defaultTab="profil" />;
+    }
+
     if (activeView === "supervision") {
       return <SupervisionGlobal />;
     }
@@ -69,8 +73,9 @@ const DashboardContent = () => {
       case "etudes/generer":      return <EtudesGenerer />;
       case "etudes/docs-types":   return <EtudesDocsTypes />;
       case "etudes/historique":   return <EtudesHistorique />;
-      case "settings/membres":    return <SettingsMembers />;
-      case "settings/profil":     return <SettingsProfile />;
+      case "settings/membres":    return <SettingsPage defaultTab="membres" />;
+      case "settings/profil":     return <SettingsPage defaultTab="profil" />;
+      case "settings/securite":   return <SettingsPage defaultTab="securite" />;
       default:
         return <DashboardHome setActiveView={handleSetActiveView} />;
     }

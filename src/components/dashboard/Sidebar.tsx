@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  BookOpen, Mail, Settings, ChevronDown,
+  BookOpen, Mail, ChevronDown,
   Lock, Wand2, Users, FileText, Package, History,
-  BarChart3, FolderOpen, FilePlus, Building2, UserCog, UserCircle, X, LogOut,
+  BarChart3, FolderOpen, FilePlus, Building2, X, LogOut,
   Sun, Moon, LayoutTemplate,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -71,10 +71,11 @@ const Sidebar = ({
   const isPresidence = profile?.role === "presidence";
   const isResponsable = profile?.role === "responsable";
   const userPole = profile?.pole;
+  const isNouveauMembre = userPole === "nouveau";
 
   const visiblePoles = isPresidence
-    ? POLE_OPTIONS
-    : POLE_OPTIONS.filter((p: (typeof POLE_OPTIONS)[number]) => p.value === userPole);
+    ? POLE_OPTIONS.filter((p) => p.value !== "nouveau")
+    : POLE_OPTIONS.filter((p: (typeof POLE_OPTIONS)[number]) => p.value === userPole && p.value !== "nouveau");
 
   const formationsSubItems: SubItem[] = visiblePoles.map((p) => ({
     key: `formations/${p.value}`,
@@ -91,19 +92,20 @@ const Sidebar = ({
       key: "formations",
       label: "Formations",
       icon: <BookOpen size={16} />,
+      hidden: isNouveauMembre,
       children: formationsSubItems,
     },
     {
       key: "supervision",
       label: "Supervision",
       icon: <BarChart3 size={16} />,
-      hidden: !supervisionVisible,
+      hidden: !supervisionVisible || isNouveauMembre,
     },
     {
       key: "mails",
       label: "Mails",
       icon: <Mail size={16} />,
-      hidden: !isPresidence,
+      hidden: !isPresidence || isNouveauMembre,
       children: [
         { key: "mails/compose", label: "Rédaction IA", icon: <Wand2 size={14} /> },
         { key: "mails/contacts", label: "Contacts", icon: <Users size={14} /> },
@@ -116,29 +118,11 @@ const Sidebar = ({
       key: "etudes",
       label: "Études",
       icon: <FolderOpen size={16} />,
-      hidden: !etudesVisible,
+      hidden: !etudesVisible || isNouveauMembre,
       children: [
         { key: "etudes/generer", label: "Générer", icon: <FilePlus size={14} /> },
         { key: "etudes/docs-types", label: "Docs Types", icon: <LayoutTemplate size={14} /> },
         { key: "etudes/historique", label: "Historique", icon: <History size={14} /> },
-      ],
-    },
-    {
-      key: "settings",
-      label: "Paramètres",
-      icon: <Settings size={16} />,
-      children: [
-        {
-          key: "settings/membres",
-          label: "Membres",
-          icon: <UserCog size={14} />,
-          locked: !isPresidence,
-        },
-        {
-          key: "settings/profil",
-          label: "Mon profil",
-          icon: <UserCircle size={14} />,
-        },
       ],
     },
   ];
@@ -196,6 +180,14 @@ const Sidebar = ({
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
+        {isNouveauMembre && (
+          <div className="mx-1 mt-1 mb-3 px-3 py-3 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20">
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">Accès en attente</p>
+            <p className="text-[11px] text-amber-600/80 dark:text-amber-400/70 mt-0.5 leading-snug">
+              Un président doit t'attribuer un pôle pour débloquer l'accès.
+            </p>
+          </div>
+        )}
         {menuItems.map((item) => {
           if (item.hidden) return null;
 
@@ -287,19 +279,33 @@ const Sidebar = ({
       </nav>
 
       {/* User footer */}
-      <div className="px-3 py-3 border-t border-border shrink-0">
-        <div className="flex items-center gap-3 px-2.5 py-2">
-          <div className="w-7 h-7 rounded-full bg-muted dark:bg-white/15 flex items-center justify-center text-foreground dark:text-white/80 text-xs font-semibold shrink-0 select-none">
-            {profile?.full_name?.[0]?.toUpperCase() ?? "?"}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-foreground dark:text-white/80 truncate leading-tight">
-              {profile?.full_name}
-            </p>
-            <p className="text-[10px] text-muted-foreground dark:text-white/35 leading-tight mt-0.5">
-              {ROLE_LABELS[profile?.role ?? ""] ?? profile?.role}
-            </p>
-          </div>
+      <div className="px-3 py-3 border-t border-border dark:border-white/[0.06] shrink-0">
+        <div className="flex items-center gap-2 px-0.5">
+          {/* Profil cliquable */}
+          <button
+            onClick={() => setActiveView("settings/profil")}
+            className="flex items-center gap-2.5 flex-1 min-w-0 px-2 py-1.5 rounded-lg hover:bg-muted/60 dark:hover:bg-white/[0.05] transition-colors text-left"
+          >
+            <div className="w-7 h-7 rounded-full bg-muted dark:bg-white/15 flex items-center justify-center shrink-0 overflow-hidden select-none">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs font-semibold text-foreground dark:text-white/80">
+                  {profile?.full_name?.[0]?.toUpperCase() ?? "?"}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-foreground dark:text-white/80 truncate leading-tight">
+                {profile?.full_name}
+              </p>
+              <p className="text-[10px] text-muted-foreground dark:text-white/35 leading-tight mt-0.5">
+                {ROLE_LABELS[profile?.role ?? ""] ?? profile?.role}
+              </p>
+            </div>
+          </button>
+
+          {/* Toggle thème */}
           <button
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground dark:hover:bg-white/10 dark:text-white/30 dark:hover:text-white/65 transition-colors shrink-0"
@@ -307,6 +313,8 @@ const Sidebar = ({
           >
             {resolvedTheme === "dark" ? <Moon size={14} /> : <Sun size={14} />}
           </button>
+
+          {/* Déconnexion */}
           <button
             onClick={onSignOut}
             className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground dark:hover:bg-white/10 dark:text-white/30 dark:hover:text-white/65 transition-colors shrink-0"
