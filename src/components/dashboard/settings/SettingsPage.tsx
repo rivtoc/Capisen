@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { POLE_OPTIONS, MEMBER_ROLES, type PoleType, type MemberRole } from "@/lib/db-types";
 import {
-  Camera, Check, ChevronDown, ChevronRight, EyeOff, Linkedin,
+  Camera, Check, ChevronDown, ChevronRight, Eye, EyeOff, Linkedin,
   Loader2, Lock, Search, Shield, Trash2, Users, X,
 } from "lucide-react";
 import AvatarCropModal from "./AvatarCropModal";
