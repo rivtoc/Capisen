@@ -4,8 +4,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { POLE_OPTIONS, MEMBER_ROLES, type PoleType, type MemberRole } from "@/lib/db-types";
 import {
-  Camera, Check, ChevronDown, ChevronRight, Eye, EyeOff, Linkedin,
-  Loader2, Lock, Search, Shield, Trash2, Users,
+  Camera, Check, ChevronDown, ChevronRight, EyeOff, Linkedin,
+  Loader2, Lock, Search, Shield, Trash2, Users, X,
 } from "lucide-react";
 import AvatarCropModal from "./AvatarCropModal";
 
@@ -18,6 +18,10 @@ interface Member {
   full_name: string;
   pole: PoleType;
   role: MemberRole;
+  avatar_url: string | null;
+  position: string | null;
+  bio: string | null;
+  linkedin_url: string | null;
 }
 
 interface EditState { pole: PoleType; role: MemberRole; }
@@ -66,15 +70,27 @@ interface SettingsPageProps {
   defaultTab?: Tab;
 }
 
+const SETTINGS_TAB_KEY = "capisen_settings_tab";
+
 const SettingsPage = ({ defaultTab = "profil" }: SettingsPageProps) => {
   const { user, profile, refreshProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const saved = localStorage.getItem(SETTINGS_TAB_KEY);
+    if (saved === "profil" || saved === "securite" || saved === "membres") return saved;
+    return defaultTab;
+  });
   const isPresidence = profile?.role === "presidence";
+  const isNouveauMembre = profile?.pole === "nouveau";
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    localStorage.setItem(SETTINGS_TAB_KEY, tab);
+  };
 
   const tabs = [
     { key: "profil" as Tab, label: "Mon profil", icon: <ChevronRight size={14} /> },
     { key: "securite" as Tab, label: "Sécurité", icon: <Shield size={14} /> },
-    ...(isPresidence ? [{ key: "membres" as Tab, label: "Membres", icon: <Users size={14} /> }] : []),
+    ...(!isNouveauMembre ? [{ key: "membres" as Tab, label: "Membres", icon: <Users size={14} /> }] : []),
   ];
 
   return (
@@ -88,7 +104,7 @@ const SettingsPage = ({ defaultTab = "profil" }: SettingsPageProps) => {
           {tabs.map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => handleTabChange(tab.key)}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all ${
                 activeTab === tab.key
                   ? "bg-muted text-foreground font-medium dark:bg-white/[0.09] dark:text-white"
@@ -110,9 +126,7 @@ const SettingsPage = ({ defaultTab = "profil" }: SettingsPageProps) => {
         {activeTab === "securite" && (
           <SecuriteTab user={user} />
         )}
-        {activeTab === "membres" && isPresidence && (
-          <MembresTab />
-        )}
+        {activeTab === "membres" && !isNouveauMembre && <MembresTab canEdit={isPresidence} />}
       </div>
     </div>
   );
@@ -137,6 +151,15 @@ const ProfilTab = ({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Sync form fields if profile loads after initial mount
+  useEffect(() => {
+    if (!profile) return;
+    setFullName(profile.full_name ?? "");
+    setPosition(profile.position ?? "");
+    setBio(profile.bio ?? "");
+    setLinkedinUrl(profile.linkedin_url ?? "");
+  }, [profile?.id]);
+
   const isDirty =
     fullName !== (profile?.full_name ?? "") ||
     position !== (profile?.position ?? "") ||
@@ -145,6 +168,10 @@ const ProfilTab = ({
 
   const handleSave = async () => {
     if (!user) return;
+    if (!fullName.trim()) {
+      setError("Le nom complet ne peut pas être vide.");
+      return;
+    }
     setSaving(true);
     setError(null);
     const { error: err } = await supabase.from("profiles").update({
@@ -541,18 +568,105 @@ const InlineSelect = ({
   );
 };
 
+// ─── Modal profil membre ───────────────────────────────────────────────────────
+
+const MemberProfileModal = ({ member, onClose }: { member: Member; onClose: () => void }) => {
+  const poleLabel = POLE_OPTIONS.find((p) => p.value === member.pole)?.label ?? member.pole;
+  const initials = member.full_name.slice(0, 2).toUpperCase();
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h3 className="text-sm font-semibold text-foreground">Profil du membre</h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* Contenu */}
+        <div className="p-6 space-y-5">
+          {/* Avatar + nom + poste */}
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0 text-xl font-bold text-muted-foreground">
+              {member.avatar_url
+                ? <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                : initials}
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-foreground text-base truncate">{member.full_name}</p>
+              <p className="text-sm text-muted-foreground truncate mt-0.5">
+                {member.position || <span className="italic opacity-60">Poste non renseigné</span>}
+              </p>
+              <span className="inline-block mt-1.5 px-2 py-0.5 text-[11px] font-medium rounded-full bg-muted text-muted-foreground">
+                {poleLabel}
+              </span>
+            </div>
+          </div>
+
+          <div className="border-t border-border" />
+
+          {/* Bio */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Bio</p>
+            {member.bio
+              ? <p className="text-sm text-foreground leading-relaxed">{member.bio}</p>
+              : <p className="text-sm text-muted-foreground italic">Non renseignée.</p>
+            }
+          </div>
+
+          {/* LinkedIn */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">LinkedIn</p>
+            {member.linkedin_url
+              ? (
+                <a
+                  href={member.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  <Linkedin size={14} />
+                  Voir le profil
+                </a>
+              )
+              : <p className="text-sm text-muted-foreground italic">Non renseigné.</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Onglet Membres ───────────────────────────────────────────────────────────
 
-const MembresTab = () => {
+const MembresTab = ({ canEdit }: { canEdit: boolean }) => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [edits, setEdits] = useState<Record<string, EditState>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    supabase.from("profiles").select("id, full_name, pole, role").order("full_name")
+    supabase
+      .from("profiles")
+      .select("id, full_name, pole, role, avatar_url, position, bio, linkedin_url")
+      .order("full_name")
       .then(({ data }) => { setMembers((data as Member[]) ?? []); setLoading(false); });
   }, []);
 
@@ -570,6 +684,16 @@ const MembresTab = () => {
     const e = edits[member.id];
     if (!e) return false;
     return e.pole !== member.pole || e.role !== member.role;
+  };
+
+  const handleDelete = async (member: Member) => {
+    setDeleteLoading(member.id);
+    const { error } = await supabase.from("profiles").delete().eq("id", member.id);
+    setDeleteLoading(null);
+    if (!error) {
+      setMembers((p) => p.filter((m) => m.id !== member.id));
+      setDeletingId(null);
+    }
   };
 
   const handleSave = async (member: Member) => {
@@ -590,9 +714,14 @@ const MembresTab = () => {
 
   return (
     <div className="space-y-6">
+      {selectedMember && (
+        <MemberProfileModal member={selectedMember} onClose={() => setSelectedMember(null)} />
+      )}
       <div>
         <h2 className="text-lg font-semibold text-foreground">Membres</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Modifiez le rôle et le pôle de chaque membre.</p>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          {canEdit ? "Modifiez le rôle et le pôle de chaque membre." : "Consultez les membres de l'association."}
+        </p>
       </div>
 
       <div className="relative max-w-xs">
@@ -615,16 +744,57 @@ const MembresTab = () => {
           {/* En-tête colonnes */}
           <div className="flex items-center gap-4 px-5 pb-1">
             <div className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Membre</div>
-            <div className="w-44 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Pôle</div>
-            <div className="w-36 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Rôle</div>
-            <div className="w-28 shrink-0" />
+            {canEdit ? (
+              <>
+                <div className="w-44 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Pôle</div>
+                <div className="w-36 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Rôle</div>
+                <div className="w-36 shrink-0" />
+              </>
+            ) : (
+              <div className="w-48 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Pôle · Rôle</div>
+            )}
           </div>
 
           {filtered.map((member) => {
-            const edit = getEdit(member);
-            const dirty = isDirty(member);
             const isPending = member.pole === "nouveau";
 
+            // ── Vue lecture seule ──────────────────────────────────────────────
+            if (!canEdit) {
+              const poleLabel = POLE_OPTIONS.find((p) => p.value === member.pole)?.label ?? member.pole;
+              return (
+                <div
+                  key={member.id}
+                  onClick={() => setSelectedMember(member)}
+                  className={`flex items-center gap-4 px-5 py-3 rounded-xl border cursor-pointer transition-colors ${
+                    isPending
+                      ? "border-amber-200 bg-amber-50/60 dark:border-amber-500/20 dark:bg-amber-500/[0.06]"
+                      : "border-border bg-card hover:bg-muted/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0 text-xs font-bold text-muted-foreground uppercase">
+                      {member.avatar_url
+                        ? <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                        : member.full_name.charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{member.full_name}</p>
+                      {member.position && <p className="text-[11px] text-muted-foreground truncate">{member.position}</p>}
+                      {isPending && <p className="text-[11px] text-amber-600 dark:text-amber-400">En attente d'attribution</p>}
+                    </div>
+                  </div>
+                  <div className="w-48 shrink-0 flex items-center gap-1.5 flex-wrap">
+                    <span className="px-2 py-0.5 text-[11px] rounded-full bg-muted text-muted-foreground">{poleLabel}</span>
+                    <span className="px-2 py-0.5 text-[11px] rounded-full bg-muted text-muted-foreground">{ROLE_LABELS[member.role]}</span>
+                  </div>
+                  <ChevronRight size={14} className="text-muted-foreground/30 shrink-0" />
+                </div>
+              );
+            }
+
+            // ── Vue éditable (présidence) ──────────────────────────────────────
+            const edit = getEdit(member);
+            const dirty = isDirty(member);
             return (
               <div
                 key={member.id}
@@ -636,14 +806,19 @@ const MembresTab = () => {
               >
                 {/* Avatar + nom */}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 text-xs font-bold text-muted-foreground uppercase">
-                    {member.full_name.charAt(0)}
-                  </div>
+                  <button
+                    onClick={() => setSelectedMember(member)}
+                    className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center shrink-0 text-xs font-bold text-muted-foreground uppercase hover:opacity-80 transition-opacity"
+                    title="Voir le profil"
+                  >
+                    {member.avatar_url
+                      ? <img src={member.avatar_url} alt="" className="w-full h-full object-cover" />
+                      : member.full_name.charAt(0)}
+                  </button>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{member.full_name}</p>
-                    {isPending && (
-                      <p className="text-[11px] text-amber-600 dark:text-amber-400 leading-tight">En attente d'attribution</p>
-                    )}
+                    {member.position && <p className="text-[11px] text-muted-foreground truncate">{member.position}</p>}
+                    {isPending && <p className="text-[11px] text-amber-600 dark:text-amber-400 leading-tight">En attente d'attribution</p>}
                   </div>
                 </div>
 
@@ -667,9 +842,26 @@ const MembresTab = () => {
                   />
                 </div>
 
-                {/* Action */}
-                <div className="w-28 shrink-0 flex justify-end">
-                  {saved[member.id] ? (
+                {/* Actions */}
+                <div className="w-36 shrink-0 flex items-center justify-end gap-1.5">
+                  {deletingId === member.id ? (
+                    <>
+                      <button
+                        onClick={() => handleDelete(member)}
+                        disabled={deleteLoading === member.id}
+                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                      >
+                        {deleteLoading === member.id ? <Loader2 size={10} className="animate-spin" /> : null}
+                        Confirmer
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(null)}
+                        className="px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground border border-border rounded-lg transition-colors"
+                      >
+                        Annuler
+                      </button>
+                    </>
+                  ) : saved[member.id] ? (
                     <span className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 font-medium">
                       <Check size={12} /> Sauvegardé
                     </span>
@@ -682,7 +874,15 @@ const MembresTab = () => {
                       {saving[member.id] ? <Loader2 size={11} className="animate-spin" /> : null}
                       Enregistrer
                     </button>
-                  ) : null}
+                  ) : (
+                    <button
+                      onClick={() => setDeletingId(member.id)}
+                      className="p-1.5 text-muted-foreground/30 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                      title="Supprimer le membre"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             );

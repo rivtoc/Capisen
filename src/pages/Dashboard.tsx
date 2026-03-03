@@ -24,6 +24,7 @@ const DashboardContent = () => {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { resolvedTheme } = useTheme();
+  const effectiveTheme = resolvedTheme ?? (localStorage.getItem("capisen-theme") ?? "dark");
   const [activeView, setActiveView] = useState(
     () => localStorage.getItem("capisen_activeView") ?? "home"
   );
@@ -82,7 +83,7 @@ const DashboardContent = () => {
   };
 
   return (
-    <div data-theme={resolvedTheme ?? "light"} className="h-screen flex overflow-hidden bg-background">
+    <div data-theme={effectiveTheme} className="h-screen flex overflow-hidden bg-background">
       {/* Dark sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
