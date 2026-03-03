@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -116,6 +117,78 @@ ${message}
       error: 'Erreur lors de l\'envoi de l\'email',
       details: 'Une erreur est survenue. Veuillez réessayer.'
     });
+  }
+});
+
+// ─── Suivi Étude — intégration outil Python ────────────────────────────────
+
+// Chemin vers le dossier v1 de l'outil Python (relatif au dossier refonte)
+const SUIVI_ETUDE_V1 = process.env.SUIVI_ETUDE_PATH
+  ?? path.resolve(__dirname, '../..', 'suivi etude', 'aides_python', 'v1');
+
+const PYTHON_BIN = process.env.PYTHON_PATH ?? 'python';
+
+/** Lance un script Python et collecte la sortie (text ou binary). */
+function runPython(script: string, args: string[], binary: true): Promise<Buffer>;
+function runPython(script: string, args: string[], binary?: false): Promise<string>;
+function runPython(script: string, args: string[], binary = false): Promise<string | Buffer> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(PYTHON_BIN, [script, ...args], {
+      cwd: SUIVI_ETUDE_V1,
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+    });
+
+    const chunks: Buffer[] = [];
+    const errChunks: Buffer[] = [];
+
+    proc.stdout.on('data', (d: Buffer) => chunks.push(d));
+    proc.stderr.on('data', (d: Buffer) => errChunks.push(d));
+
+    proc.on('close', (code) => {
+      if (code !== 0) {
+        const errMsg = Buffer.concat(errChunks).toString('utf-8').trim();
+        reject(new Error(errMsg || `Python exited with code ${code}`));
+      } else {
+        const out = Buffer.concat(chunks);
+        resolve(binary ? out : out.toString('utf-8'));
+      }
+    });
+
+    proc.on('error', (err) => {
+      reject(new Error(`Impossible de démarrer Python (${PYTHON_BIN}) : ${err.message}`));
+    });
+  });
+}
+
+/** GET /api/etudes/studies — liste des études depuis Notion */
+app.get('/api/etudes/studies', async (_req, res) => {
+  try {
+    const output = await runPython('list_etudes.py', []);
+    const names = JSON.parse(output) as string[];
+    res.json(names);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue';
+    res.status(500).json({ error: message });
+  }
+});
+
+/** POST /api/etudes/generate — génère les documents et renvoie un ZIP */
+app.post('/api/etudes/generate', async (req, res) => {
+  const { studyName } = req.body as { studyName?: string };
+  if (!studyName) {
+    return res.status(400).json({ error: 'studyName manquant' });
+  }
+  try {
+    const zipBuffer = await runPython('generate_cli.py', [studyName], true);
+    res.set({
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="documents.zip"`,
+      'Content-Length': zipBuffer.length,
+    });
+    res.send(zipBuffer);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue';
+    res.status(500).json({ error: message });
   }
 });
 

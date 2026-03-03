@@ -16,6 +16,7 @@ import SupervisionGlobal from "@/components/dashboard/supervision/SupervisionGlo
 import FormationsPole from "@/components/dashboard/formations/FormationsPole";
 import EtudesGenerer from "@/components/dashboard/etudes/EtudesGenerer";
 import EtudesHistorique from "@/components/dashboard/etudes/EtudesHistorique";
+import EtudesDocsTypes from "@/components/dashboard/etudes/EtudesDocsTypes";
 import SettingsMembers from "@/components/dashboard/settings/SettingsMembers";
 import SettingsProfile from "@/components/dashboard/settings/SettingsProfile";
 import type { PoleType } from "@/lib/db-types";
@@ -66,6 +67,7 @@ const DashboardContent = () => {
       case "mails/offres":        return <MailOffres />;
       case "mails/history":       return <MailHistory />;
       case "etudes/generer":      return <EtudesGenerer />;
+      case "etudes/docs-types":   return <EtudesDocsTypes />;
       case "etudes/historique":   return <EtudesHistorique />;
       case "settings/membres":    return <SettingsMembers />;
       case "settings/profil":     return <SettingsProfile />;

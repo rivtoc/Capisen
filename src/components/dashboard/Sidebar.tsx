@@ -4,7 +4,7 @@ import {
   BookOpen, Mail, Settings, ChevronDown,
   Lock, Wand2, Users, FileText, Package, History,
   BarChart3, FolderOpen, FilePlus, Building2, UserCog, UserCircle, X, LogOut,
-  Sun, Moon,
+  Sun, Moon, LayoutTemplate,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import type { UserProfile } from "@/contexts/AuthContext";
@@ -119,6 +119,7 @@ const Sidebar = ({
       hidden: !etudesVisible,
       children: [
         { key: "etudes/generer", label: "Générer", icon: <FilePlus size={14} /> },
+        { key: "etudes/docs-types", label: "Docs Types", icon: <LayoutTemplate size={14} /> },
         { key: "etudes/historique", label: "Historique", icon: <History size={14} /> },
       ],
     },
