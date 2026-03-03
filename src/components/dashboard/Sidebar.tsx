@@ -3,8 +3,12 @@ import {
   BookOpen, Mail, Settings, ChevronDown, ChevronRight,
   Lock, Wand2, Users, FileText, Package, History,
 <<<<<<< HEAD
+<<<<<<< HEAD
   BarChart3, FolderOpen, FilePlus, Building2, UserCog, UserCircle, X, LogOut,
   Sun, Moon, LayoutTemplate,
+=======
+  BarChart3, FolderOpen, FilePlus, Building2, UserCog, UserCircle, X,
+>>>>>>> parent of b83cd6f (Amélioration formation plus quiz)
 =======
   BarChart3, FolderOpen, FilePlus, Building2, UserCog, UserCircle, X,
 >>>>>>> parent of b83cd6f (Amélioration formation plus quiz)
@@ -100,9 +104,14 @@ const Sidebar = ({ activeView, setActiveView, profile, isOpen, onClose }: Sideba
       hidden: !etudesVisible,
       children: [
 <<<<<<< HEAD
+<<<<<<< HEAD
         { key: "etudes/generer", label: "Générer", icon: <FilePlus size={14} /> },
         { key: "etudes/docs-types", label: "Docs Types", icon: <LayoutTemplate size={14} /> },
         { key: "etudes/historique", label: "Historique", icon: <History size={14} /> },
+=======
+        { key: "etudes/generer", label: "Générer", icon: <FilePlus size={15} /> },
+        { key: "etudes/historique", label: "Historique", icon: <History size={15} /> },
+>>>>>>> parent of b83cd6f (Amélioration formation plus quiz)
 =======
         { key: "etudes/generer", label: "Générer", icon: <FilePlus size={15} /> },
         { key: "etudes/historique", label: "Historique", icon: <History size={15} /> },

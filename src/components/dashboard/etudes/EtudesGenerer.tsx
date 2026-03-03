@@ -139,6 +139,7 @@ const EtudesGenerer = () => {
       )}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
 
         {/* Sélecteur d'étude */}
@@ -157,6 +158,8 @@ const EtudesGenerer = () => {
                 disabled={!isReady || isGenerating}
                 className="w-full px-4 py-2.5 pr-9 rounded-xl border border-border bg-background text-sm text-foreground appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring"
 =======
+=======
+>>>>>>> parent of b83cd6f (Amélioration formation plus quiz)
       {/* Formulaire (front uniquement) */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-5">
         <h3 className="text-sm font-semibold text-foreground">Informations de l'étude</h3>
@@ -213,6 +216,9 @@ const EtudesGenerer = () => {
               <label
                 key={doc.id}
                 className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+<<<<<<< HEAD
+>>>>>>> parent of b83cd6f (Amélioration formation plus quiz)
+=======
 >>>>>>> parent of b83cd6f (Amélioration formation plus quiz)
               >
                 <option value="">— Sélectionner une étude —</option>
@@ -230,6 +236,7 @@ const EtudesGenerer = () => {
           <label className="text-sm font-medium text-foreground block mb-2">
             Documents générés
           </label>
+<<<<<<< HEAD
 <<<<<<< HEAD
           <p className="text-xs text-muted-foreground mb-3">
             L'outil génère tous les fichiers applicables selon le nombre d'intervenants de l'étude.
@@ -258,6 +265,8 @@ const EtudesGenerer = () => {
               );
             })}
 =======
+=======
+>>>>>>> parent of b83cd6f (Amélioration formation plus quiz)
           <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center opacity-60 cursor-not-allowed">
             <Upload size={20} className="text-muted-foreground mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">Glissez vos fichiers ici</p>
