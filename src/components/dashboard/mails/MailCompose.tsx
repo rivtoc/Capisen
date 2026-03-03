@@ -295,7 +295,7 @@ const MailCompose = () => {
               className={`px-4 py-2 rounded-xl text-sm border transition-colors ${
                 contentType === ct.value
                   ? "bg-black text-white border-black"
-                  : "bg-card text-foreground border-border hover:border-gray-400"
+                  : "bg-white text-foreground border-gray-200 hover:border-gray-400"
               }`}
             >
               {ct.label}
@@ -332,7 +332,7 @@ const MailCompose = () => {
               </div>
             )}
 
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card focus-within:ring-2 focus-within:ring-black/10 focus-within:border-black transition">
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-black/10 focus-within:border-black transition">
               <Search size={14} className="text-muted-foreground shrink-0" />
               <input
                 type="text"
@@ -356,7 +356,7 @@ const MailCompose = () => {
             </div>
 
             {showContactDropdown && (
-              <div className="absolute z-20 top-full mt-1 w-full bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+              <div className="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                 {contactSuggestions.length === 0 ? (
                   <p className="px-4 py-3 text-sm text-muted-foreground">
                     {contacts.length === selectedContacts.length
@@ -364,13 +364,13 @@ const MailCompose = () => {
                       : "Aucun contact trouvé."}
                   </p>
                 ) : (
-                  <ul className="max-h-52 overflow-y-auto divide-y divide-border">
+                  <ul className="max-h-52 overflow-y-auto divide-y divide-gray-100">
                     {contactSuggestions.map((c) => (
                       <li key={c.id}>
                         <button
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => addSelectedContact(c)}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
                         >
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-foreground">{c.full_name}</p>
@@ -402,7 +402,7 @@ const MailCompose = () => {
           <select
             value={selectedTemplate}
             onChange={(e) => handleTemplateChange(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition appearance-none"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition appearance-none"
           >
             <option value="">Sélectionne un template…</option>
             {filteredTemplates.map((t) => (
@@ -427,7 +427,7 @@ const MailCompose = () => {
                 className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                   selectedOffres.includes(o.id)
                     ? "bg-black text-white border-black"
-                    : "bg-card text-foreground border-border hover:border-gray-400"
+                    : "bg-white text-foreground border-gray-200 hover:border-gray-400"
                 }`}
               >
                 {o.title}
@@ -451,7 +451,7 @@ const MailCompose = () => {
               ? "Ex : Post pour présenter notre offre d'audit SI, suite à un événement tech à Brest…"
               : "Ex : Je les ai rencontrés au forum Brest Avenir, ils cherchent un prestataire pour une refonte web…"
           }
-          className="w-full px-4 py-3 rounded-xl border border-border bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
         />
       </div>
 
@@ -472,7 +472,7 @@ const MailCompose = () => {
               {mentionedContacts.map((c) => (
                 <span
                   key={c.id}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-muted text-foreground text-sm rounded-lg"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-foreground text-sm rounded-lg"
                 >
                   <span className="font-medium">{c.full_name}</span>
                   {c.company && (
@@ -490,7 +490,7 @@ const MailCompose = () => {
           )}
 
           <div ref={mentionRef} className="relative">
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card focus-within:ring-2 focus-within:ring-black/10 focus-within:border-black transition">
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus-within:ring-2 focus-within:ring-black/10 focus-within:border-black transition">
               <Search size={14} className="text-muted-foreground shrink-0" />
               <input
                 type="text"
@@ -506,17 +506,17 @@ const MailCompose = () => {
             </div>
 
             {showMentionDropdown && mentionSearch.length > 0 && (
-              <div className="absolute z-20 top-full mt-1 w-full bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+              <div className="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                 {mentionSuggestions.length === 0 ? (
                   <p className="px-4 py-3 text-sm text-muted-foreground">Aucun contact trouvé.</p>
                 ) : (
-                  <ul className="max-h-48 overflow-y-auto divide-y divide-border">
+                  <ul className="max-h-48 overflow-y-auto divide-y divide-gray-100">
                     {mentionSuggestions.map((c) => (
                       <li key={c.id}>
                         <button
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => addMentionedContact(c)}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
                         >
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-foreground">{c.full_name}</p>
@@ -559,7 +559,7 @@ const MailCompose = () => {
             <div className="flex gap-2">
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-muted/40 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 {copied ? <Check size={12} /> : <Copy size={12} />}
                 {copied ? "Copié !" : "Copier"}
@@ -579,11 +579,11 @@ const MailCompose = () => {
             value={result}
             onChange={(e) => setResult(e.target.value)}
             rows={18}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
           />
 
           {/* Zone de raffinement */}
-          <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+          <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-3">
             <div className="flex items-center gap-2">
               <RotateCcw size={14} className="text-muted-foreground" />
               <h4 className="text-sm font-semibold text-foreground">Affiner</h4>
@@ -594,7 +594,7 @@ const MailCompose = () => {
                 {pastRefinements.map((r, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-muted text-muted-foreground text-xs rounded-full"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-muted-foreground text-xs rounded-full"
                   >
                     <Check size={10} className="text-green-500 shrink-0" />
                     {r}
@@ -611,7 +611,7 @@ const MailCompose = () => {
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleRefine()}
                 placeholder="Ex : Rends-le plus court, change le ton, reformule l'accroche…"
                 disabled={refining}
-                className="flex-1 px-4 py-2.5 text-sm border border-border rounded-xl bg-muted/40 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition disabled:opacity-50"
               />
               <button
                 onClick={handleRefine}

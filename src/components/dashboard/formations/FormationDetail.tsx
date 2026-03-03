@@ -376,7 +376,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={onEdit}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-muted/40 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <Pencil size={12} />
               Modifier
@@ -384,7 +384,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-red-500/20 text-red-500 dark:text-red-400 rounded-lg hover:bg-red-500/10 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-red-100 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
             >
               <Trash2 size={12} />
               Supprimer
@@ -400,16 +400,16 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
 
       {/* Barre de progression */}
       {enrollment && steps.length > 0 && (
-        <div className="bg-card border border-border rounded-2xl p-4 mb-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-foreground">Progression</span>
             <span className="text-sm text-muted-foreground">
               {completedCount} / {steps.length} étapes
             </span>
           </div>
-          <div className="w-full bg-muted rounded-full h-2">
+          <div className="w-full bg-gray-100 rounded-full h-2">
             <div
-              className="bg-foreground rounded-full h-2 transition-all duration-300"
+              className="bg-black rounded-full h-2 transition-all duration-300"
               style={{ width: `${(completedCount / steps.length) * 100}%` }}
             />
           </div>
@@ -418,14 +418,14 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
 
       {/* CTA inscription */}
       {!enrollment && (
-        <div className="bg-card border border-border rounded-2xl p-6 mb-6 text-center">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 text-center">
           <p className="text-sm text-muted-foreground mb-4">
             Inscrivez-vous pour accéder aux étapes et suivre votre progression.
           </p>
           <button
             onClick={handleEnroll}
             disabled={enrolling}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-sm font-semibold rounded-xl hover:bg-foreground/90 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
             {enrolling && <Loader2 size={14} className="animate-spin" />}
             S'inscrire à cette formation
@@ -435,7 +435,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
 
       {/* Étapes */}
       {steps.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground bg-card border border-border rounded-2xl">
+        <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
           <p className="text-sm">Aucune étape configurée pour cette formation.</p>
         </div>
       ) : (
@@ -451,12 +451,12 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
             return (
               <div
                 key={step.id}
-                className={`bg-card border rounded-2xl overflow-hidden transition-colors ${
+                className={`bg-white border rounded-2xl overflow-hidden transition-colors ${
                   completed
-                    ? "border-green-500/30"
+                    ? "border-green-200"
                     : !accessible
-                    ? "border-border opacity-60"
-                    : "border-border"
+                    ? "border-gray-100 opacity-60"
+                    : "border-gray-200"
                 }`}
               >
                 {/* En-tête étape */}
@@ -464,16 +464,16 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                   onClick={() => accessible && setExpanded(isExpanded ? null : step.id)}
                   disabled={!accessible}
                   className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${
-                    accessible ? "hover:bg-muted/40" : "cursor-default"
+                    accessible ? "hover:bg-gray-50" : "cursor-default"
                   }`}
                 >
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
                       completed
-                        ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                        ? "bg-green-100 text-green-700"
                         : !accessible
-                        ? "bg-muted text-muted-foreground/30"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-gray-100 text-gray-300"
+                        : "bg-gray-100 text-muted-foreground"
                     }`}
                   >
                     {completed ? (
@@ -502,12 +502,12 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                   {/* Badges requis */}
                   <div className="flex items-center gap-1.5 shrink-0">
                     {step.requires_file && (
-                      <span className="text-xs px-1.5 py-0.5 bg-muted text-muted-foreground rounded">
+                      <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-muted-foreground rounded">
                         Fichier
                       </span>
                     )}
                     {step.requires_text && (
-                      <span className="text-xs px-1.5 py-0.5 bg-muted text-muted-foreground rounded">
+                      <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-muted-foreground rounded">
                         Texte
                       </span>
                     )}
@@ -520,7 +520,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                 </button>
 
                 {isExpanded && accessible && (
-                  <div className="px-5 pb-5 pt-4 border-t border-border space-y-4">
+                  <div className="px-5 pb-5 pt-4 border-t border-gray-100 space-y-4">
                     {/* Vidéo */}
                     {step.video_url && (
                       <div>
@@ -538,7 +538,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                             href={step.video_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex items-center gap-2 px-4 py-3 bg-muted/40 border border-border rounded-xl text-sm text-blue-600 hover:underline"
+                            className="flex items-center gap-2 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-blue-600 hover:underline"
                           >
                             <Play size={14} />
                             Voir la vidéo
@@ -549,7 +549,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
 
                     {/* Contenu texte */}
                     {step.description && (
-                      <div className="bg-muted/40 rounded-xl p-4">
+                      <div className="bg-gray-50 rounded-xl p-4">
                         <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                           {step.description}
                         </p>
@@ -567,7 +567,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                             <button
                               key={doc.id}
                               onClick={() => handleDownload(doc)}
-                              className="flex items-center gap-3 px-4 py-2.5 bg-card border border-border rounded-xl text-sm hover:bg-muted/40 transition-colors text-left"
+                              className="flex items-center gap-3 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm hover:bg-gray-50 transition-colors text-left"
                             >
                               <FileText size={14} className="text-muted-foreground shrink-0" />
                               <span className="flex-1 truncate text-foreground">{doc.file_name}</span>
@@ -585,7 +585,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                           Votre réponse <span className="text-red-400">*</span>
                         </p>
                         {completed && savedTextAnswer ? (
-                          <div className="px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-xl text-sm text-foreground whitespace-pre-wrap">
+                          <div className="px-4 py-3 bg-green-50 border border-green-100 rounded-xl text-sm text-foreground whitespace-pre-wrap">
                             {savedTextAnswer}
                           </div>
                         ) : (
@@ -597,7 +597,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                             disabled={completed}
                             rows={4}
                             placeholder="Rédigez votre réponse ici…"
-                            className="w-full px-4 py-3 rounded-xl border border-border bg-muted/40 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition disabled:opacity-50"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition disabled:opacity-50"
                           />
                         )}
                       </div>
@@ -614,7 +614,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                             {stepSubs.map((sub) => (
                               <div
                                 key={sub.id}
-                                className="flex items-center gap-3 px-4 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm"
+                                className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-xl text-sm"
                               >
                                 <FileText size={14} className="text-blue-500 shrink-0" />
                                 <span className="flex-1 truncate text-foreground">{sub.file_name}</span>
@@ -624,7 +624,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                           </div>
                         )}
                         {!completed && (
-                          <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-border rounded-xl hover:bg-muted/40 transition-colors">
+                          <label className="flex items-center gap-2 cursor-pointer px-4 py-2.5 border border-dashed border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                             {uploading === step.id ? (
                               <Loader2 size={14} className="animate-spin text-muted-foreground" />
                             ) : (
@@ -655,10 +655,10 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                         disabled={completed || !canCompleteStep(step) || completing === step.id}
                         className={`flex items-center gap-2 px-4 py-2 text-sm rounded-xl border transition-colors ${
                           completed
-                            ? "bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400 cursor-default"
+                            ? "bg-green-50 border-green-200 text-green-700 cursor-default"
                             : canCompleteStep(step)
-                            ? "bg-foreground text-background border-foreground hover:bg-foreground/90"
-                            : "bg-card border-border text-muted-foreground cursor-not-allowed opacity-50"
+                            ? "bg-black text-white border-black hover:bg-gray-800"
+                            : "bg-white border-gray-200 text-muted-foreground cursor-not-allowed opacity-50"
                         }`}
                       >
                         {completing === step.id ? (
@@ -681,10 +681,10 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
       {quiz && enrollment && (steps.length === 0 || completedCount === steps.length) && (
         <div className="mt-6">
           {quizAttempt ? (
-            <div className="bg-card border border-green-500/30 rounded-2xl p-6">
+            <div className="bg-white border border-green-200 rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-green-500/15 flex items-center justify-center shrink-0">
-                  <Trophy size={18} className="text-green-600 dark:text-green-400" />
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <Trophy size={18} className="text-green-700" />
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold text-foreground text-sm">Quiz terminé</p>
@@ -703,7 +703,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                 {quizExpanded ? "Masquer le détail" : "Voir le détail des réponses"}
               </button>
               {quizExpanded && quiz && (
-                <div className="mt-4 pt-4 border-t border-border space-y-5">
+                <div className="mt-4 pt-4 border-t border-gray-100 space-y-5">
                   {quiz.questions.map((q, qi) => {
                     const selectedId = quizAttempt.answers[q.id];
                     const selected = q.choices.find((c) => c.id === selectedId);
@@ -721,11 +721,11 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                                 key={c.id}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
                                   wasSelected && c.is_correct
-                                    ? "bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400"
+                                    ? "bg-green-50 border border-green-200 text-green-700"
                                     : wasSelected && !c.is_correct
-                                    ? "bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400"
+                                    ? "bg-red-50 border border-red-200 text-red-700"
                                     : showCorrect
-                                    ? "bg-muted/40 border border-border text-muted-foreground"
+                                    ? "bg-gray-50 border border-gray-200 text-muted-foreground"
                                     : "text-muted-foreground"
                                 }`}
                               >
@@ -736,7 +736,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                                       : wasSelected && !c.is_correct
                                       ? "bg-red-500"
                                       : showCorrect
-                                      ? "bg-muted-foreground/40"
+                                      ? "bg-gray-300"
                                       : "bg-transparent"
                                   }`}
                                 />
@@ -762,7 +762,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                 Quiz de fin de parcours ({quiz.questions.length} question{quiz.questions.length > 1 ? "s" : ""})
               </h3>
               {quiz.questions.map((q, qi) => (
-                <div key={q.id} className="bg-card border border-border rounded-2xl p-5">
+                <div key={q.id} className="bg-white border border-gray-200 rounded-2xl p-5">
                   <p className="text-sm font-medium text-foreground mb-3">
                     {qi + 1}. {q.question}
                   </p>
@@ -773,14 +773,14 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
                         onClick={() => setSelectedAnswers((prev) => ({ ...prev, [q.id]: c.id }))}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-sm text-left transition-colors ${
                           selectedAnswers[q.id] === c.id
-                            ? "border-foreground bg-foreground text-background"
-                            : "border-border hover:border-foreground/30 text-foreground"
+                            ? "border-black bg-black text-white"
+                            : "border-gray-200 hover:border-gray-300 text-foreground"
                         }`}
                       >
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                          selectedAnswers[q.id] === c.id ? "border-background" : "border-border"
+                          selectedAnswers[q.id] === c.id ? "border-white" : "border-gray-300"
                         }`}>
-                          {selectedAnswers[q.id] === c.id && <div className="w-2 h-2 rounded-full bg-card" />}
+                          {selectedAnswers[q.id] === c.id && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                         {c.label}
                       </button>
@@ -791,14 +791,14 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
               <button
                 onClick={handleSubmitQuiz}
                 disabled={submittingQuiz || quiz.questions.some((q) => !selectedAnswers[q.id])}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-foreground text-background rounded-xl text-sm font-semibold hover:bg-foreground/90 disabled:opacity-50 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-3 bg-black text-white rounded-xl text-sm font-semibold hover:bg-gray-800 disabled:opacity-50 transition-colors"
               >
                 {submittingQuiz && <Loader2 size={14} className="animate-spin" />}
                 Terminer le quiz
               </button>
             </div>
           ) : (
-            <div className="bg-card border border-border rounded-2xl p-6 text-center">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
               <Trophy size={28} className="mx-auto mb-3 text-muted-foreground opacity-60" />
               <p className="font-semibold text-foreground text-sm mb-1">Quiz de fin de parcours</p>
               <p className="text-xs text-muted-foreground mb-4">
@@ -806,7 +806,7 @@ const FormationDetail = ({ formation, canManage, onBack, onEdit, onDeleted }: Pr
               </p>
               <button
                 onClick={() => setQuizStarted(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-foreground text-background text-sm font-semibold rounded-xl hover:bg-foreground/90 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
               >
                 <Trophy size={14} />
                 Commencer le quiz

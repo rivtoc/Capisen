@@ -138,6 +138,7 @@ const EtudesGenerer = () => {
         </div>
       )}
 
+<<<<<<< HEAD
       <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
 
         {/* Sélecteur d'étude */}
@@ -155,6 +156,64 @@ const EtudesGenerer = () => {
                 onChange={(e) => { setSelected(e.target.value); setDownloadUrl(null); setStatus("ready"); }}
                 disabled={!isReady || isGenerating}
                 className="w-full px-4 py-2.5 pr-9 rounded-xl border border-border bg-background text-sm text-foreground appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring"
+=======
+      {/* Formulaire (front uniquement) */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-5">
+        <h3 className="text-sm font-semibold text-foreground">Informations de l'étude</h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground">Nom de l'étude</label>
+            <input
+              type="text"
+              disabled
+              placeholder="Ex : Étude MarketPro 2025"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground">Référence</label>
+            <input
+              type="text"
+              disabled
+              placeholder="Ex : CAP-2025-042"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground">Client</label>
+            <input
+              type="text"
+              disabled
+              placeholder="Nom de l'entreprise cliente"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-foreground">Interlocuteur</label>
+            <input
+              type="text"
+              disabled
+              placeholder="Prénom Nom"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        {/* Sélection des documents */}
+        <div>
+          <label className="text-sm font-medium text-foreground block mb-3">
+            Documents à générer
+          </label>
+          <div className="space-y-2">
+            {DOCUMENT_TYPES.map((doc) => (
+              <label
+                key={doc.id}
+                className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+>>>>>>> parent of b83cd6f (Amélioration formation plus quiz)
               >
                 <option value="">— Sélectionner une étude —</option>
                 {studies.map((s) => (
@@ -171,6 +230,7 @@ const EtudesGenerer = () => {
           <label className="text-sm font-medium text-foreground block mb-2">
             Documents générés
           </label>
+<<<<<<< HEAD
           <p className="text-xs text-muted-foreground mb-3">
             L'outil génère tous les fichiers applicables selon le nombre d'intervenants de l'étude.
           </p>
@@ -197,6 +257,12 @@ const EtudesGenerer = () => {
                 </button>
               );
             })}
+=======
+          <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center opacity-60 cursor-not-allowed">
+            <Upload size={20} className="text-muted-foreground mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">Glissez vos fichiers ici</p>
+            <p className="text-xs text-muted-foreground mt-1">PDF, Word, Excel — max 10 Mo</p>
+>>>>>>> parent of b83cd6f (Amélioration formation plus quiz)
           </div>
         </div>
 
@@ -214,6 +280,7 @@ const EtudesGenerer = () => {
         </button>
       </div>
 
+<<<<<<< HEAD
       {/* Téléchargement */}
       {status === "done" && downloadUrl && (
         <div className="mt-4 bg-green-50 border border-green-100 rounded-2xl p-5 flex items-center gap-4">
@@ -232,6 +299,13 @@ const EtudesGenerer = () => {
             <Download size={14} />
             Télécharger
           </a>
+=======
+      {/* Aperçu des fichiers générés */}
+      <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Folder size={16} className="text-muted-foreground" />
+          <h3 className="text-sm font-semibold text-foreground">Fichiers générés</h3>
+>>>>>>> parent of b83cd6f (Amélioration formation plus quiz)
         </div>
       )}
     </div>

@@ -28,9 +28,9 @@ const EtudesHistorique = () => {
       </div>
 
       {/* Tableau */}
-      <div className="bg-card border border-border rounded-2xl overflow-hidden overflow-x-auto">
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden overflow-x-auto">
         <table className="w-full text-sm min-w-[560px]">
-          <thead className="bg-muted/40 border-b border-border">
+          <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="text-left px-5 py-3 font-medium text-foreground">Référence</th>
               <th className="text-left px-5 py-3 font-medium text-foreground">Client</th>
@@ -40,9 +40,9 @@ const EtudesHistorique = () => {
               <th className="px-5 py-3 w-12"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-gray-100">
             {MOCK_HISTORY.map((item) => (
-              <tr key={item.ref} className="hover:bg-muted/40 transition-colors opacity-60">
+              <tr key={item.ref} className="hover:bg-gray-50 transition-colors opacity-60">
                 <td className="px-5 py-3 font-mono text-xs font-medium text-foreground">
                   {item.ref}
                 </td>
@@ -52,7 +52,7 @@ const EtudesHistorique = () => {
                     {item.docs.map((d) => (
                       <span
                         key={d}
-                        className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full"
+                        className="text-xs bg-gray-100 text-muted-foreground px-2 py-0.5 rounded-full"
                       >
                         {d}
                       </span>

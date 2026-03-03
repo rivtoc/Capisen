@@ -16,7 +16,7 @@ const ROLE_LABELS: Record<MemberRole, string> = {
 };
 
 const ROLE_COLORS: Record<MemberRole, string> = {
-  normal: "bg-muted text-gray-600",
+  normal: "bg-gray-100 text-gray-600",
   responsable: "bg-blue-50 text-blue-700",
   presidence: "bg-black text-white",
 };
@@ -70,7 +70,7 @@ const SupervisionPole = ({ pole }: Props) => {
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : members.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground bg-card border border-border rounded-2xl">
+        <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
           <p className="text-sm">Aucun membre dans ce pôle pour l'instant.</p>
         </div>
       ) : (
@@ -84,11 +84,11 @@ const SupervisionPole = ({ pole }: Props) => {
             return (
               <div
                 key={member.id}
-                className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-4"
+                className="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col gap-4"
               >
                 {/* En-tête membre */}
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
                     {member.avatar_url ? (
                       <img
                         src={member.avatar_url}
@@ -133,10 +133,10 @@ const SupervisionPole = ({ pole }: Props) => {
                             {f.progress}%
                           </span>
                         </div>
-                        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div
                             className={`h-1.5 rounded-full transition-all ${
-                              f.completed ? "bg-green-500" : f.progress > 0 ? "bg-black" : "bg-muted"
+                              f.completed ? "bg-green-500" : f.progress > 0 ? "bg-black" : "bg-gray-200"
                             }`}
                             style={{ width: `${f.progress}%` }}
                           />
@@ -147,12 +147,12 @@ const SupervisionPole = ({ pole }: Props) => {
                 </div>
 
                 {/* Progression globale */}
-                <div className="pt-1 border-t border-border">
+                <div className="pt-1 border-t border-gray-100">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-medium text-foreground">Progression globale</span>
                     <span className="text-xs font-semibold text-foreground">{progress}%</span>
                   </div>
-                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className="h-2 bg-black rounded-full transition-all"
                       style={{ width: `${progress}%` }}

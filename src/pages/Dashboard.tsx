@@ -1,12 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
-import { ThemeProvider, useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo-capisen.png";
 import { Menu } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
-import DashboardHome from "@/components/dashboard/DashboardHome";
 import MailCompose from "@/components/dashboard/mails/MailCompose";
 import MailContacts from "@/components/dashboard/mails/MailContacts";
 import MailTemplates from "@/components/dashboard/mails/MailTemplates";
@@ -21,20 +18,20 @@ import SettingsMembers from "@/components/dashboard/settings/SettingsMembers";
 import SettingsProfile from "@/components/dashboard/settings/SettingsProfile";
 import type { PoleType } from "@/lib/db-types";
 
-const DashboardContent = () => {
-  const { profile, signOut } = useAuth();
+const Dashboard = () => {
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const { resolvedTheme } = useTheme();
   const [activeView, setActiveView] = useState(
     () => localStorage.getItem("capisen_activeView") ?? "home"
   );
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
 
+  // Sur mobile, ferme le sidebar après navigation
   const handleSetActiveView = (view: string) => {
     setActiveView(view);
     localStorage.setItem("capisen_activeView", view);
@@ -61,81 +58,87 @@ const DashboardContent = () => {
     }
 
     switch (activeView) {
-      case "mails/compose":       return <MailCompose />;
-      case "mails/contacts":      return <MailContacts />;
-      case "mails/templates":     return <MailTemplates />;
-      case "mails/offres":        return <MailOffres />;
-      case "mails/history":       return <MailHistory />;
+      case "mails/compose":    return <MailCompose />;
+      case "mails/contacts":  return <MailContacts />;
+      case "mails/templates": return <MailTemplates />;
+      case "mails/offres":    return <MailOffres />;
+      case "mails/history":   return <MailHistory />;
       case "etudes/generer":      return <EtudesGenerer />;
       case "etudes/docs-types":   return <EtudesDocsTypes />;
       case "etudes/historique":   return <EtudesHistorique />;
       case "settings/membres":    return <SettingsMembers />;
       case "settings/profil":     return <SettingsProfile />;
       default:
-        return <DashboardHome setActiveView={handleSetActiveView} />;
+        return (
+          <div className="p-4 md:p-8 max-w-3xl mx-auto">
+            <h1 className="text-2xl font-bold text-foreground mb-1">
+              Bienvenue{profile?.full_name ? `, ${profile.full_name}` : ""} 👋
+            </h1>
+            <p className="text-muted-foreground mb-8">
+              Pôle <strong>{profile?.pole}</strong> · Rôle <strong>{profile?.role}</strong>
+            </p>
+            <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-muted-foreground">
+              <p className="text-lg font-medium mb-2">Tableau de bord CAPISEN</p>
+              <p className="text-sm">Sélectionnez une fonctionnalité dans le menu à gauche.</p>
+            </div>
+          </div>
+        );
     }
   };
 
   return (
-    <div data-theme={resolvedTheme ?? "light"} className="h-screen flex overflow-hidden bg-background">
-      {/* Dark sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onSignOut={handleSignOut}
-        activeView={activeView}
-        setActiveView={handleSetActiveView}
-        profile={profile}
-      />
-
-      {/* Mobile backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Content area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile-only top bar */}
-        <header className="lg:hidden bg-background border-b border-border px-4 py-3 flex items-center gap-3 sticky top-0 z-20 shrink-0">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex items-center justify-between z-50 sticky top-0">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
-            aria-label="Ouvrir le menu"
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors text-muted-foreground"
+            aria-label="Ouvrir/fermer le menu"
           >
             <Menu size={20} />
           </button>
           <button onClick={() => handleSetActiveView("home")}>
-            <img src={logo} alt="CAPISEN" className="h-7 w-auto" />
+            <img src={logo} alt="CAPISEN" className="h-8 w-auto" />
           </button>
-        </header>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:block text-sm text-muted-foreground truncate max-w-[180px]">
+            {profile?.full_name ?? user?.email}
+          </span>
+          <button
+            onClick={handleSignOut}
+            className="px-3 md:px-4 py-2 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+          >
+            Se déconnecter
+          </button>
+        </div>
+      </header>
 
-        {/* Main content with view transitions */}
-        <main className="flex-1 overflow-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeView}
-              initial={{ opacity: 0, x: 6 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -6 }}
-              transition={{ duration: 0.18, ease: "easeOut" }}
-              className="min-h-full"
-            >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
+      {/* Main layout */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Backdrop mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          activeView={activeView}
+          setActiveView={handleSetActiveView}
+          profile={profile}
+        />
+
+        <main className="flex-1 overflow-auto min-w-0">
+          {renderContent()}
         </main>
       </div>
     </div>
   );
 };
-
-const Dashboard = () => (
-  <ThemeProvider attribute="class" defaultTheme="light" storageKey="capisen-theme">
-    <DashboardContent />
-  </ThemeProvider>
-);
 
 export default Dashboard;

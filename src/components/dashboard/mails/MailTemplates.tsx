@@ -150,7 +150,7 @@ const MailTemplates = () => {
       </div>
 
       {showForm && (
-        <div className="bg-card border border-border rounded-2xl p-6 mb-6">
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-foreground">
               {editId ? "Modifier le template" : "Nouveau template"}
@@ -169,7 +169,7 @@ const MailTemplates = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ex : Prise de contact initiale"
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
               />
             </div>
 
@@ -191,7 +191,7 @@ const MailTemplates = () => {
                     className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                       type === ct.value
                         ? "bg-black text-white border-black"
-                        : "bg-card text-foreground border-border hover:border-gray-400"
+                        : "bg-white text-foreground border-gray-200 hover:border-gray-400"
                     }`}
                   >
                     {ct.label}
@@ -211,7 +211,7 @@ const MailTemplates = () => {
                 onChange={(e) => setContext(e.target.value)}
                 rows={5}
                 placeholder="Ex : Prise de contact initiale suite à un forum. Ton direct, objectif = obtenir un RDV…"
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
               />
             </div>
 
@@ -231,7 +231,7 @@ const MailTemplates = () => {
                   {mentionedContacts.map((c) => (
                     <span
                       key={c.id}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-muted text-foreground text-sm rounded-lg"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-foreground text-sm rounded-lg"
                     >
                       <span className="font-medium">{c.full_name}</span>
                       {c.company && (
@@ -249,7 +249,7 @@ const MailTemplates = () => {
               )}
 
               <div ref={mentionRef} className="relative">
-                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-muted/40 focus-within:ring-2 focus-within:ring-black/10 focus-within:border-black transition">
+                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus-within:ring-2 focus-within:ring-black/10 focus-within:border-black transition">
                   <Search size={14} className="text-muted-foreground shrink-0" />
                   <input
                     type="text"
@@ -262,17 +262,17 @@ const MailTemplates = () => {
                 </div>
 
                 {showDropdown && mentionSearch.length > 0 && (
-                  <div className="absolute z-20 top-full mt-1 w-full bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                  <div className="absolute z-20 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                     {mentionSuggestions.length === 0 ? (
                       <p className="px-4 py-3 text-sm text-muted-foreground">Aucun contact trouvé.</p>
                     ) : (
-                      <ul className="max-h-44 overflow-y-auto divide-y divide-border">
+                      <ul className="max-h-44 overflow-y-auto divide-y divide-gray-100">
                         {mentionSuggestions.map((c) => (
                           <li key={c.id}>
                             <button
                               onMouseDown={(e) => e.preventDefault()}
                               onClick={() => addMentionedContact(c)}
-                              className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-muted/40 transition-colors"
+                              className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-gray-50 transition-colors"
                             >
                               <div className="min-w-0">
                                 <p className="text-sm font-medium text-foreground">{c.full_name}</p>
@@ -306,7 +306,7 @@ const MailTemplates = () => {
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="px-4 py-2 text-sm border border-border rounded-xl hover:bg-muted/40 transition-colors"
+              className="px-4 py-2 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
             >
               Annuler
             </button>
@@ -317,7 +317,7 @@ const MailTemplates = () => {
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : templates.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground bg-card border border-border rounded-2xl">
+        <div className="text-center py-12 text-muted-foreground bg-white border border-gray-200 rounded-2xl">
           <p className="text-sm">Aucun template. Créez-en un pour commencer.</p>
         </div>
       ) : (
@@ -328,18 +328,18 @@ const MailTemplates = () => {
             return (
               <div
                 key={t.id}
-                className="bg-card border border-border rounded-2xl px-5 py-4 flex items-start justify-between gap-4"
+                className="bg-white border border-gray-200 rounded-2xl px-5 py-4 flex items-start justify-between gap-4"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium text-foreground text-sm">{t.title}</p>
                     {tLabel && (
-                      <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-gray-100 text-muted-foreground px-2 py-0.5 rounded-full">
                         {tLabel}
                       </span>
                     )}
                     {linkedCount > 0 && (
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-muted-foreground bg-gray-100 px-2 py-0.5 rounded-full">
                         {linkedCount} contact{linkedCount !== 1 ? "s" : ""} lié{linkedCount !== 1 ? "s" : ""}
                       </span>
                     )}
@@ -351,7 +351,7 @@ const MailTemplates = () => {
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => openEdit(t)}
-                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-gray-100 text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <Pencil size={14} />
                   </button>

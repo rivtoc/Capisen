@@ -28,7 +28,7 @@ const PasswordInput = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-2.5 pr-10 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+        className="w-full px-4 py-2.5 pr-10 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
       />
       <button
         type="button"
@@ -136,7 +136,7 @@ const SettingsProfile = () => {
       </div>
 
       {/* — Infos — */}
-      <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-5">
         <h3 className="text-sm font-semibold text-foreground">Informations</h3>
 
         <div className="flex flex-col gap-1.5">
@@ -146,7 +146,7 @@ const SettingsProfile = () => {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Prénom Nom"
-            className="w-full px-4 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
           />
         </div>
 
@@ -156,7 +156,7 @@ const SettingsProfile = () => {
             type="text"
             value={user?.email ?? ""}
             disabled
-            className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground cursor-not-allowed"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
           />
         </div>
 
@@ -167,7 +167,7 @@ const SettingsProfile = () => {
               type="text"
               value={poleLabel}
               disabled
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground cursor-not-allowed"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -176,7 +176,7 @@ const SettingsProfile = () => {
               type="text"
               value={ROLE_LABELS[profile?.role ?? ""] ?? "—"}
               disabled
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-muted-foreground cursor-not-allowed"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-muted-foreground cursor-not-allowed"
             />
           </div>
         </div>
@@ -195,7 +195,7 @@ const SettingsProfile = () => {
       </div>
 
       {/* — Mot de passe — */}
-      <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-5">
         <h3 className="text-sm font-semibold text-foreground">Changer le mot de passe</h3>
 
         <div className="flex flex-col gap-1.5">
