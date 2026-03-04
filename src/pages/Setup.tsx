@@ -15,9 +15,10 @@ const Setup = () => {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Si pas de session après chargement → renvoyer au portail
+  // Si pas de session ET pas de token dans l'URL → renvoyer au portail
   useEffect(() => {
-    if (!authLoading && !session) {
+    const hasHashToken = window.location.hash.includes("access_token");
+    if (!authLoading && !session && !hasHashToken) {
       navigate("/portail", { replace: true });
     }
   }, [authLoading, session, navigate]);
