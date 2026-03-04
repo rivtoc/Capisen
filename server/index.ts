@@ -4,7 +4,6 @@ import { Resend } from 'resend';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { spawn } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -120,52 +119,19 @@ ${message}
   }
 });
 
-// ─── Suivi Étude — intégration outil Python ────────────────────────────────
+// ─── Suivi Étude — intégration API Python (Railway) ───────────────────────
 
-// Chemin vers le dossier v1 de l'outil Python (relatif au dossier refonte)
-const SUIVI_ETUDE_V1 = process.env.SUIVI_ETUDE_PATH
-  ?? path.resolve(__dirname, '../..', 'suivi etude', 'aides_python', 'v1');
+const PYTHON_API_URL = (process.env.PYTHON_API_URL ?? '').replace(/\/$/, '');
 
-const PYTHON_BIN = process.env.PYTHON_PATH ?? 'python';
-
-/** Lance un script Python et collecte la sortie (text ou binary). */
-function runPython(script: string, args: string[], binary: true): Promise<Buffer>;
-function runPython(script: string, args: string[], binary?: false): Promise<string>;
-function runPython(script: string, args: string[], binary = false): Promise<string | Buffer> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn(PYTHON_BIN, [script, ...args], {
-      cwd: SUIVI_ETUDE_V1,
-      env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
-    });
-
-    const chunks: Buffer[] = [];
-    const errChunks: Buffer[] = [];
-
-    proc.stdout.on('data', (d: Buffer) => chunks.push(d));
-    proc.stderr.on('data', (d: Buffer) => errChunks.push(d));
-
-    proc.on('close', (code) => {
-      if (code !== 0) {
-        const errMsg = Buffer.concat(errChunks).toString('utf-8').trim();
-        reject(new Error(errMsg || `Python exited with code ${code}`));
-      } else {
-        const out = Buffer.concat(chunks);
-        resolve(binary ? out : out.toString('utf-8'));
-      }
-    });
-
-    proc.on('error', (err) => {
-      reject(new Error(`Impossible de démarrer Python (${PYTHON_BIN}) : ${err.message}`));
-    });
-  });
-}
-
-/** GET /api/etudes/studies — liste des études depuis Notion */
+/** GET /api/etudes/studies — liste des études depuis l'API Python */
 app.get('/api/etudes/studies', async (_req, res) => {
+  if (!PYTHON_API_URL) {
+    return res.status(503).json({ error: 'PYTHON_API_URL non configuré' });
+  }
   try {
-    const output = await runPython('list_etudes.py', []);
-    const names = JSON.parse(output) as string[];
-    res.json(names);
+    const response = await fetch(`${PYTHON_API_URL}/api/studies`);
+    const data = await response.json();
+    res.status(response.status).json(data);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erreur inconnue';
     res.status(500).json({ error: message });
@@ -174,12 +140,24 @@ app.get('/api/etudes/studies', async (_req, res) => {
 
 /** POST /api/etudes/generate — génère les documents et renvoie un ZIP */
 app.post('/api/etudes/generate', async (req, res) => {
+  if (!PYTHON_API_URL) {
+    return res.status(503).json({ error: 'PYTHON_API_URL non configuré' });
+  }
   const { studyName } = req.body as { studyName?: string };
   if (!studyName) {
     return res.status(400).json({ error: 'studyName manquant' });
   }
   try {
-    const zipBuffer = await runPython('generate_cli.py', [studyName], true);
+    const response = await fetch(`${PYTHON_API_URL}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studyName }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      return res.status(response.status).json(data);
+    }
+    const zipBuffer = Buffer.from(await response.arrayBuffer());
     res.set({
       'Content-Type': 'application/zip',
       'Content-Disposition': `attachment; filename="documents.zip"`,
