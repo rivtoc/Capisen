@@ -160,24 +160,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session?.user) {
-        fetchUserIdentity(data.session.user).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Utiliser onAuthStateChange comme source de vérité unique.
+    // L'événement INITIAL_SESSION se déclenche après que Supabase a traité
+    // les tokens du hash d'URL (liens d'invitation, reset de mot de passe…),
+    // ce qui évite la race condition avec getSession() qui retourne null
+    // avant que le hash soit traité.
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session?.user) {
-        fetchUserIdentity(session.user);
+        fetchUserIdentity(session.user).finally(() => {
+          if (event === "INITIAL_SESSION") setLoading(false);
+        });
       } else {
         setProfile(null);
         setClientRecord(null);
         setUserType(null);
-        localStorage.removeItem(ACTIVITY_KEY);
+        if (event === "SIGNED_OUT") localStorage.removeItem(ACTIVITY_KEY);
+        if (event === "INITIAL_SESSION") setLoading(false);
       }
     });
 

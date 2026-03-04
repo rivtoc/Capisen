@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,10 +15,17 @@ const Setup = () => {
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Si pas de session ET pas de token dans l'URL → renvoyer au portail
+  // Capturer la présence de tokens au premier rendu synchrone,
+  // avant que Supabase ne nettoie l'URL (replaceState).
+  const hadInviteToken = useRef(
+    window.location.hash.includes("access_token") ||
+    window.location.hash.includes("type=invite") ||
+    window.location.hash.includes("type=recovery")
+  );
+
+  // Si pas de session ET pas de token connu → renvoyer au portail
   useEffect(() => {
-    const hasHashToken = window.location.hash.includes("access_token");
-    if (!authLoading && !session && !hasHashToken) {
+    if (!authLoading && !session && !hadInviteToken.current) {
       navigate("/portail", { replace: true });
     }
   }, [authLoading, session, navigate]);
