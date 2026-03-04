@@ -11,10 +11,25 @@ const Login = () => {
   const { session, userType, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (!authLoading && session) {
-      navigate(userType === "client" ? "/client" : "/dashboard", { replace: true });
+    // Attendre que userType soit déterminé (fetchUserIdentity asynchrone)
+    if (authLoading || !session || userType === null) return;
+
+    const type = searchParams.get("type");
+
+    // Bloquer les cross-logins
+    if (type === "client" && userType === "member") {
+      supabase.auth.signOut();
+      setError("Ce compte est un compte membre. Connectez-vous via l'espace membres.");
+      return;
     }
-  }, [session, userType, authLoading, navigate]);
+    if (type === "member" && userType === "client") {
+      supabase.auth.signOut();
+      setError("Ce compte est un compte client. Connectez-vous via l'espace clients.");
+      return;
+    }
+
+    navigate(userType === "client" ? "/client" : "/dashboard", { replace: true });
+  }, [session, userType, authLoading, navigate, searchParams]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
