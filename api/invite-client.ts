@@ -59,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       email,
       {
         data: { is_client: true, full_name, company_name: company_name ?? "" },
-        redirectTo: `${process.env.VITE_APP_URL ?? "https://capisen.fr"}/setup`,
+        redirectTo: `${process.env.APP_URL ?? "https://capisen.fr"}/setup`,
       }
     );
 
