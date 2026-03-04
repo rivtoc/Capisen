@@ -39,7 +39,7 @@ const Portail = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Espace Membres */}
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/login?type=member")}
             className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 hover:shadow-md hover:border-gray-300 transition-all text-left group animate-fade-up"
           >
             <div className="w-11 h-11 rounded-xl bg-black/5 flex items-center justify-center mb-5 group-hover:bg-black/8 transition-colors">
@@ -53,7 +53,7 @@ const Portail = () => {
 
           {/* Espace Clients */}
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/login?type=client")}
             className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 hover:shadow-md hover:border-gray-300 transition-all text-left group animate-fade-up [animation-delay:80ms] [animation-fill-mode:backwards]"
           >
             <div className="w-11 h-11 rounded-xl bg-black/5 flex items-center justify-center mb-5 group-hover:bg-black/8 transition-colors">

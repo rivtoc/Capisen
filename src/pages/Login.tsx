@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo-capisen.png";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isClient = searchParams.get("type") === "client";
   const { session, userType, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -63,10 +65,12 @@ const Login = () => {
         {/* Carte de connexion */}
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 animate-fade-up">
           <h1 className="text-2xl font-bold text-foreground mb-1">
-            Espace membres
+            {isClient ? "Espace clients" : "Espace membres"}
           </h1>
           <p className="text-sm text-muted-foreground mb-8">
-            Connectez-vous à votre espace personnel Capisen.
+            {isClient
+              ? "Connectez-vous pour suivre vos projets et documents."
+              : "Connectez-vous à votre espace personnel Capisen."}
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -81,7 +85,7 @@ const Login = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="prenom.nom@isen-brest.fr"
+                placeholder={isClient ? "votre@email.com" : "prenom.nom@isen-brest.fr"}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
               />
             </div>
@@ -128,20 +132,22 @@ const Login = () => {
 
         {/* Liens bas de page */}
         <div className="mt-6 flex flex-col items-center gap-2">
-          <p className="text-sm text-muted-foreground">
-            Pas encore de compte ?{" "}
-            <button
-              onClick={() => navigate("/signup")}
-              className="font-medium text-foreground hover:underline"
-            >
-              Créer un compte
-            </button>
-          </p>
+          {!isClient && (
+            <p className="text-sm text-muted-foreground">
+              Pas encore de compte ?{" "}
+              <button
+                onClick={() => navigate("/signup")}
+                className="font-medium text-foreground hover:underline"
+              >
+                Créer un compte
+              </button>
+            </p>
+          )}
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate(isClient ? "/portail" : "/")}
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            ← Retour à l'accueil
+            ← Retour
           </button>
         </div>
       </div>
