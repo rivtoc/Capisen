@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Portail from "./pages/Portail";
+import Setup from "./pages/Setup";
 import ClientPortal from "./pages/ClientPortal";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +42,7 @@ const App = () => (
               }
             />
             <Route path="/portail" element={<Portail />} />
+            <Route path="/setup" element={<Setup />} />
             <Route
               path="/client"
               element={
