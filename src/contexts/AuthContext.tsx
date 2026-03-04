@@ -88,12 +88,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq("id", user.id)
         .single();
 
-      if (clientData) {
-        setClientRecord(clientData as ClientRecord);
-        setProfile(null);
-        setUserType("client");
-        return;
-      }
+      // userType = "client" dès que le metadata le dit,
+      // même si la requête clients échoue (RLS manquante, etc.)
+      setClientRecord(clientData as ClientRecord | null);
+      setProfile(null);
+      setUserType("client");
+      return;
     }
 
     // 3. Nouveau membre (premier login après confirmation) : créer le profil
