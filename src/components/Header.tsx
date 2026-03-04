@@ -5,7 +5,7 @@ import logo from "@/assets/logo-capisen.png";
 
 const Header = () => {
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, userType } = useAuth();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -68,10 +68,16 @@ const Header = () => {
             Nous contacter
           </button>
           <button
-            onClick={() => navigate(session ? "/dashboard" : "/login")}
+            onClick={() => {
+              if (session) {
+                navigate(userType === "client" ? "/client" : "/dashboard");
+              } else {
+                navigate("/portail");
+              }
+            }}
             className="px-5 py-2.5 bg-transparent text-primary border border-primary text-sm font-medium rounded-lg hover:bg-primary/10 transition-colors"
           >
-            Espace membres
+            Mon Espace
           </button>
         </nav>
 

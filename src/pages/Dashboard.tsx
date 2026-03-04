@@ -18,6 +18,9 @@ import EtudesGenerer from "@/components/dashboard/etudes/EtudesGenerer";
 import EtudesHistorique from "@/components/dashboard/etudes/EtudesHistorique";
 import EtudesDocsTypes from "@/components/dashboard/etudes/EtudesDocsTypes";
 import SettingsPage from "@/components/dashboard/settings/SettingsPage";
+import ClientsListe from "@/components/dashboard/clients/ClientsListe";
+import ClientsInviter from "@/components/dashboard/clients/ClientsInviter";
+import ClientsProjets from "@/components/dashboard/clients/ClientsProjets";
 import type { PoleType } from "@/lib/db-types";
 
 const DashboardContent = () => {
@@ -74,6 +77,9 @@ const DashboardContent = () => {
       case "etudes/generer":      return <EtudesGenerer />;
       case "etudes/docs-types":   return <EtudesDocsTypes />;
       case "etudes/historique":   return <EtudesHistorique />;
+      case "clients/liste":       return <ClientsListe />;
+      case "clients/inviter":     return <ClientsInviter />;
+      case "clients/projets":     return <ClientsProjets />;
       case "settings/membres":    return <SettingsPage defaultTab="membres" />;
       case "settings/profil":     return <SettingsPage defaultTab="profil" />;
       case "settings/securite":   return <SettingsPage defaultTab="securite" />;

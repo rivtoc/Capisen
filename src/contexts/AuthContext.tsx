@@ -15,10 +15,22 @@ export interface UserProfile {
   linkedin_url: string | null;
 }
 
+export interface ClientRecord {
+  id: string;
+  full_name: string;
+  email: string;
+  company_name: string;
+  is_active: boolean;
+}
+
+export type UserType = "member" | "client" | null;
+
 interface AuthContextValue {
   session: Session | null;
   user: User | null;
   profile: UserProfile | null;
+  clientRecord: ClientRecord | null;
+  userType: UserType;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -32,6 +44,8 @@ const AuthContext = createContext<AuthContextValue>({
   session: null,
   user: null,
   profile: null,
+  clientRecord: null,
+  userType: null,
   loading: true,
   signOut: async () => {},
   refreshProfile: async () => {},
@@ -40,6 +54,8 @@ const AuthContext = createContext<AuthContextValue>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [clientRecord, setClientRecord] = useState<ClientRecord | null>(null);
+  const [userType, setUserType] = useState<UserType>(null);
   const [loading, setLoading] = useState(true);
   const sessionRef = useRef<Session | null>(null);
   const inactivityTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -49,15 +65,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     sessionRef.current = session;
   }, [session]);
 
-  const fetchProfile = async (user: User) => {
-    const { data } = await supabase
+  const fetchUserIdentity = async (user: User) => {
+    // 1. Cherche dans profiles (membres internes)
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user.id)
       .single();
 
-    if (!data && user.email_confirmed_at) {
-      // Premier login après confirmation : créer le profil depuis les métadonnées
+    if (profileData) {
+      setProfile(profileData as UserProfile);
+      setClientRecord(null);
+      setUserType("member");
+      return;
+    }
+
+    // 2. Pas de profil — vérifier si c'est un client (metadata.is_client)
+    if (user.user_metadata?.is_client === true) {
+      const { data: clientData } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (clientData) {
+        setClientRecord(clientData as ClientRecord);
+        setProfile(null);
+        setUserType("client");
+        return;
+      }
+    }
+
+    // 3. Nouveau membre (premier login après confirmation) : créer le profil
+    if (user.email_confirmed_at && !user.user_metadata?.is_client) {
       const meta = user.user_metadata ?? {};
       const { data: created } = await supabase
         .from("profiles")
@@ -70,14 +110,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .select()
         .single();
       setProfile(created as UserProfile | null);
-    } else {
-      setProfile(data as UserProfile | null);
+      setClientRecord(null);
+      setUserType("member");
     }
   };
 
   const refreshProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) await fetchProfile(user);
+    if (user) await fetchUserIdentity(user);
   };
 
   const signOut = async () => {
@@ -100,7 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     inactivityTimer.current = setInterval(() => {
-      if (!sessionRef.current) return; // pas connecté, rien à faire
+      if (!sessionRef.current) return;
 
       const lastActivity = parseInt(localStorage.getItem(ACTIVITY_KEY) ?? "0", 10);
       const inactive = Date.now() - lastActivity > INACTIVITY_TIMEOUT;
@@ -123,7 +163,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       if (data.session?.user) {
-        fetchProfile(data.session.user).finally(() => setLoading(false));
+        fetchUserIdentity(data.session.user).finally(() => setLoading(false));
       } else {
         setLoading(false);
       }
@@ -132,9 +172,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
-        fetchProfile(session.user);
+        fetchUserIdentity(session.user);
       } else {
         setProfile(null);
+        setClientRecord(null);
+        setUserType(null);
         localStorage.removeItem(ACTIVITY_KEY);
       }
     });
@@ -148,7 +190,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{
+      session,
+      user: session?.user ?? null,
+      profile,
+      clientRecord,
+      userType,
+      loading,
+      signOut,
+      refreshProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );

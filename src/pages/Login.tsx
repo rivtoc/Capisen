@@ -6,13 +6,13 @@ import logo from "@/assets/logo-capisen.png";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { session, loading: authLoading } = useAuth();
+  const { session, userType, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!authLoading && session) {
-      navigate("/dashboard", { replace: true });
+      navigate(userType === "client" ? "/client" : "/dashboard", { replace: true });
     }
-  }, [session, authLoading, navigate]);
+  }, [session, userType, authLoading, navigate]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +33,7 @@ const Login = () => {
         setError("Identifiants incorrects. Vérifie ton e-mail et ton mot de passe.");
       }
     } else {
-      navigate("/dashboard");
+      // La redirection est gérée par le useEffect (userType-aware)
     }
 
     setLoading(false);
