@@ -9,6 +9,7 @@ import {
 import { useTheme } from "next-themes";
 import type { UserProfile } from "@/contexts/AuthContext";
 import { POLE_OPTIONS } from "@/lib/db-types";
+import { canAccess } from "@/lib/permissions";
 import logo from "@/assets/logo-capisen.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -41,9 +42,10 @@ interface SidebarProps {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const ROLE_LABELS: Record<string, string> = {
-  normal: "Membre",
+  apprenti:    "Apprenti",
+  normal:      "Membre",
   responsable: "Responsable",
-  presidence: "Présidence",
+  presidence:  "Présidence",
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -69,7 +71,6 @@ const Sidebar = ({
   };
 
   const isPresidence = profile?.role === "presidence";
-  const isResponsable = profile?.role === "responsable";
   const userPole = profile?.pole;
   const isNouveauMembre = userPole === "nouveau";
 
@@ -83,9 +84,10 @@ const Sidebar = ({
     icon: <Building2 size={14} />,
   }));
 
-  const supervisionVisible = isPresidence || isResponsable;
-  const etudesVisible =
-    userPole === "presidence" || userPole === "etude" || userPole === "qualite";
+  const mailsVisible       = canAccess(profile, "mails");
+  const supervisionVisible = canAccess(profile, "supervision");
+  const etudesVisible      = canAccess(profile, "etudes");
+  const clientsVisible     = canAccess(profile, "clients");
 
   const menuItems: MenuItem[] = [
     {
@@ -105,7 +107,7 @@ const Sidebar = ({
       key: "mails",
       label: "Mails",
       icon: <Mail size={16} />,
-      hidden: !isPresidence || isNouveauMembre,
+      hidden: !mailsVisible || isNouveauMembre,
       children: [
         { key: "mails/compose", label: "Rédaction IA", icon: <Wand2 size={14} /> },
         { key: "mails/contacts", label: "Contacts", icon: <Users size={14} /> },
@@ -120,7 +122,7 @@ const Sidebar = ({
       icon: <FolderOpen size={16} />,
       hidden: !etudesVisible || isNouveauMembre,
       children: [
-        { key: "etudes/generer", label: "Générer", icon: <FilePlus size={14} /> },
+        { key: "etudes/generer",     label: "Générer",    icon: <FilePlus size={14} /> },
         { key: "etudes/docs-types", label: "Docs Types", icon: <LayoutTemplate size={14} /> },
         { key: "etudes/historique", label: "Historique", icon: <History size={14} /> },
       ],
@@ -129,7 +131,7 @@ const Sidebar = ({
       key: "clients",
       label: "Clients",
       icon: <Briefcase size={16} />,
-      hidden: !etudesVisible || isNouveauMembre,
+      hidden: !clientsVisible || isNouveauMembre,
       children: [
         { key: "clients/liste",   label: "Liste clients",    icon: <List size={14} /> },
         { key: "clients/inviter", label: "Inviter un client", icon: <UserPlus size={14} /> },

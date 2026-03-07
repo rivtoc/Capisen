@@ -22,6 +22,7 @@ import ClientsListe from "@/components/dashboard/clients/ClientsListe";
 import ClientsInviter from "@/components/dashboard/clients/ClientsInviter";
 import ClientsProjets from "@/components/dashboard/clients/ClientsProjets";
 import type { PoleType } from "@/lib/db-types";
+import { canAccess } from "@/lib/permissions";
 
 const DashboardContent = () => {
   const { profile, signOut } = useAuth();
@@ -46,6 +47,12 @@ const DashboardContent = () => {
     }
   };
 
+  const AccessDenied = () => (
+    <div className="p-8 text-center text-muted-foreground text-sm">
+      Vous n'avez pas accès à cette section.
+    </div>
+  );
+
   const renderContent = () => {
     // Membres sans pôle attribué : accès limité aux paramètres uniquement
     if (profile?.pole === "nouveau" && !activeView.startsWith("settings")) {
@@ -53,7 +60,7 @@ const DashboardContent = () => {
     }
 
     if (activeView === "supervision") {
-      return <SupervisionGlobal />;
+      return canAccess(profile, "supervision") ? <SupervisionGlobal /> : <AccessDenied />;
     }
 
     if (activeView.startsWith("formations/")) {
@@ -66,6 +73,18 @@ const DashboardContent = () => {
         );
       }
       return <FormationsPole pole={pole} />;
+    }
+
+    if (activeView.startsWith("mails/") && !canAccess(profile, "mails")) {
+      return <AccessDenied />;
+    }
+
+    if (activeView.startsWith("etudes/") && !canAccess(profile, "etudes")) {
+      return <AccessDenied />;
+    }
+
+    if (activeView.startsWith("clients/") && !canAccess(profile, "clients")) {
+      return <AccessDenied />;
     }
 
     switch (activeView) {

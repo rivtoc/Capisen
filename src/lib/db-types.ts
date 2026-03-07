@@ -23,6 +23,6 @@ export const POLE_OPTIONS = [
 
 export type PoleType = (typeof POLE_OPTIONS)[number]["value"];
 
-export const MEMBER_ROLES = ["normal", "responsable", "presidence"] as const;
+export const MEMBER_ROLES = ["apprenti", "normal", "responsable", "presidence"] as const;
 
 export type MemberRole = (typeof MEMBER_ROLES)[number];

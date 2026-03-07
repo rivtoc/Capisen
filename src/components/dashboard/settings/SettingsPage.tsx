@@ -3,6 +3,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { POLE_OPTIONS, MEMBER_ROLES, type PoleType, type MemberRole } from "@/lib/db-types";
+import { FEATURES, FEATURE_LABELS, type Feature } from "@/lib/permissions";
 import {
   Camera, Check, ChevronDown, ChevronRight, Eye, EyeOff, Linkedin,
   Loader2, Lock, Search, Shield, Trash2, Users, X,
@@ -22,14 +23,16 @@ interface Member {
   position: string | null;
   bio: string | null;
   linkedin_url: string | null;
+  permissions: string[] | null;
 }
 
-interface EditState { pole: PoleType; role: MemberRole; }
+interface EditState { pole: PoleType; role: MemberRole; permissions: string[]; }
 
 const ROLE_LABELS: Record<string, string> = {
-  normal: "Membre",
+  apprenti:    "Apprenti",
+  normal:      "Membre",
   responsable: "Responsable",
-  presidence: "Présidence",
+  presidence:  "Présidence",
 };
 
 // ─── Composant mot de passe ───────────────────────────────────────────────────
@@ -665,13 +668,24 @@ const MembresTab = ({ canEdit }: { canEdit: boolean }) => {
   useEffect(() => {
     supabase
       .from("profiles")
-      .select("id, full_name, pole, role, avatar_url, position, bio, linkedin_url")
+      .select("id, full_name, pole, role, avatar_url, position, bio, linkedin_url, permissions")
       .order("full_name")
-      .then(({ data }) => { setMembers((data as Member[]) ?? []); setLoading(false); });
+      .then(({ data, error }) => {
+        if (error) {
+          supabase
+            .from("profiles")
+            .select("id, full_name, pole, role, avatar_url, position, bio, linkedin_url")
+            .order("full_name")
+            .then(({ data: fallback }) => { setMembers((fallback as Member[]) ?? []); setLoading(false); });
+        } else {
+          setMembers((data as Member[]) ?? []);
+          setLoading(false);
+        }
+      });
   }, []);
 
   const getEdit = (member: Member): EditState =>
-    edits[member.id] ?? { pole: member.pole, role: member.role };
+    edits[member.id] ?? { pole: member.pole, role: member.role, permissions: member.permissions ?? [] };
 
   const setEdit = (id: string, field: keyof EditState, value: string) => {
     setEdits((prev) => ({
@@ -680,10 +694,20 @@ const MembresTab = ({ canEdit }: { canEdit: boolean }) => {
     }));
   };
 
+  const togglePermission = (id: string, feature: Feature) => {
+    const member = members.find((m) => m.id === id)!;
+    const current = getEdit(member).permissions;
+    const next = current.includes(feature) ? current.filter((p) => p !== feature) : [...current, feature];
+    setEdits((prev) => ({ ...prev, [id]: { ...getEdit(member), permissions: next } }));
+  };
+
   const isDirty = (member: Member) => {
     const e = edits[member.id];
     if (!e) return false;
-    return e.pole !== member.pole || e.role !== member.role;
+    if (e.pole !== member.pole || e.role !== member.role) return true;
+    const base = (member.permissions ?? []).slice().sort().join(",");
+    const edited = e.permissions.slice().sort().join(",");
+    return base !== edited;
   };
 
   const handleDelete = async (member: Member) => {
@@ -700,7 +724,7 @@ const MembresTab = ({ canEdit }: { canEdit: boolean }) => {
     const e = edits[member.id];
     if (!e) return;
     setSaving((p) => ({ ...p, [member.id]: true }));
-    const { error } = await supabase.from("profiles").update({ pole: e.pole, role: e.role }).eq("id", member.id);
+    const { error } = await supabase.from("profiles").update({ pole: e.pole, role: e.role, permissions: e.permissions }).eq("id", member.id);
     setSaving((p) => ({ ...p, [member.id]: false }));
     if (!error) {
       setMembers((p) => p.map((m) => m.id === member.id ? { ...m, ...e } : m));
@@ -748,7 +772,11 @@ const MembresTab = ({ canEdit }: { canEdit: boolean }) => {
               <>
                 <div className="w-44 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Pôle</div>
                 <div className="w-36 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Rôle</div>
-                <div className="w-36 shrink-0" />
+                <div className="flex-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">
+                  Accès supplémentaires
+                  <span className="ml-1 normal-case font-normal text-muted-foreground/60">(en plus du rôle)</span>
+                </div>
+                <div className="w-28 shrink-0" />
               </>
             ) : (
               <div className="w-48 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">Pôle · Rôle</div>
@@ -837,13 +865,40 @@ const MembresTab = ({ canEdit }: { canEdit: boolean }) => {
                   <InlineSelect
                     value={edit.role}
                     onChange={(v) => setEdit(member.id, "role", v)}
-                    options={MEMBER_ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))}
+                    options={MEMBER_ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] ?? r }))}
                     width="w-full"
                   />
                 </div>
 
+                {/* Permissions */}
+                <div className="flex-1 shrink-0">
+                  {edit.role === "presidence" ? (
+                    <span className="text-xs text-muted-foreground italic">Accès total</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {FEATURES.map((f) => {
+                        const active = edit.permissions.includes(f);
+                        return (
+                          <button
+                            key={f}
+                            type="button"
+                            onClick={() => togglePermission(member.id, f)}
+                            className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
+                              active
+                                ? "bg-foreground text-background border-foreground"
+                                : "bg-card text-muted-foreground border-border hover:border-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {FEATURE_LABELS[f]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
                 {/* Actions */}
-                <div className="w-36 shrink-0 flex items-center justify-end gap-1.5">
+                <div className="w-28 shrink-0 flex items-center justify-end gap-1.5">
                   {deletingId === member.id ? (
                     <>
                       <button

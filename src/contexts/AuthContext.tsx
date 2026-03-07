@@ -13,6 +13,7 @@ export interface UserProfile {
   bio: string | null;
   position: string | null;
   linkedin_url: string | null;
+  permissions: string[] | null;
 }
 
 export interface ClientRecord {
@@ -130,10 +131,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem(ACTIVITY_KEY, Date.now().toString());
   };
 
-  // Démarre la surveillance d'inactivité
+  // Démarre la surveillance d'inactivité (sans réinitialiser le timestamp au démarrage)
   const startInactivityWatch = () => {
-    updateActivity();
-
     const activityEvents = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"];
     activityEvents.forEach((event) =>
       window.addEventListener(event, updateActivity, { passive: true })
@@ -143,9 +142,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (!sessionRef.current) return;
 
       const lastActivity = parseInt(localStorage.getItem(ACTIVITY_KEY) ?? "0", 10);
-      const inactive = Date.now() - lastActivity > INACTIVITY_TIMEOUT;
-
-      if (inactive) {
+      if (lastActivity > 0 && Date.now() - lastActivity > INACTIVITY_TIMEOUT) {
         localStorage.removeItem(ACTIVITY_KEY);
         supabase.auth.signOut();
       }
@@ -166,12 +163,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // ce qui évite la race condition avec getSession() qui retourne null
     // avant que le hash soit traité.
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
       if (session?.user) {
+        // Au démarrage, vérifier si la session est expirée par inactivité
+        // AVANT de réinitialiser le timestamp (bug : updateActivity au mount écrasait la vérif)
+        if (event === "INITIAL_SESSION") {
+          const lastActivity = parseInt(localStorage.getItem(ACTIVITY_KEY) ?? "0", 10);
+          if (lastActivity > 0 && Date.now() - lastActivity > INACTIVITY_TIMEOUT) {
+            localStorage.removeItem(ACTIVITY_KEY);
+            supabase.auth.signOut();
+            setLoading(false);
+            return;
+          }
+          // Session valide → on enregistre l'activité maintenant
+          updateActivity();
+        }
+
+        setSession(session);
         fetchUserIdentity(session.user).finally(() => {
           if (event === "INITIAL_SESSION") setLoading(false);
         });
       } else {
+        setSession(null);
         setProfile(null);
         setClientRecord(null);
         setUserType(null);
