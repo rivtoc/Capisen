@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Pencil, Trash2, X, Loader2, Upload, CheckCircle2, AlertCircle, Search } from "lucide-react";
+import { btn, field } from "@/lib/ui-classes";
 
 // Supprime les accents et met en minuscules — sans regex complexe
 const normalize = (s: string) =>
@@ -253,7 +254,7 @@ const MailContacts = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-border rounded-xl hover:bg-muted/40 transition-colors"
+            className={`flex items-center gap-2 ${btn.secondary}`}
           >
             <Upload size={16} />
             Importer LinkedIn CSV
@@ -267,7 +268,7 @@ const MailContacts = () => {
           />
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
+            className={btn.primary}
           >
             <Plus size={16} />
             Nouveau contact
@@ -283,7 +284,7 @@ const MailContacts = () => {
           placeholder="Nom, prénom, entreprise, poste…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded-xl bg-card focus:outline-none focus:ring-2 focus:ring-black/10"
+          className={field.search}
         />
         {search && (
           <button
@@ -297,28 +298,28 @@ const MailContacts = () => {
 
       {/* Erreur de parsing */}
       {parseError && (
-        <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-2xl px-5 py-4 mb-6">
+        <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-2xl px-5 py-4 mb-6">
           <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-red-700">Fichier non reconnu</p>
-            <p className="text-sm text-red-600 mt-0.5">{parseError}</p>
+            <p className="text-sm font-medium text-red-600 dark:text-red-400">Fichier non reconnu</p>
+            <p className="text-sm text-red-600 dark:text-red-400 mt-0.5">{parseError}</p>
           </div>
-          <button onClick={cancelImport}><X size={16} className="text-red-400 hover:text-red-600" /></button>
+          <button onClick={cancelImport}><X size={16} className="text-red-400 hover:text-red-500" /></button>
         </div>
       )}
 
       {/* Résultat import */}
       {importResult && (
-        <div className="flex items-start gap-3 bg-green-50 border border-green-100 rounded-2xl px-5 py-4 mb-6">
+        <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/20 rounded-2xl px-5 py-4 mb-6">
           <CheckCircle2 size={18} className="text-green-500 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-green-700">Import terminé</p>
-            <p className="text-sm text-green-600 mt-0.5">
+            <p className="text-sm font-medium text-green-600 dark:text-green-400">Import terminé</p>
+            <p className="text-sm text-green-600 dark:text-green-400 mt-0.5">
               {importResult.imported} contact{importResult.imported !== 1 ? "s" : ""} importé{importResult.imported !== 1 ? "s" : ""}
               {importResult.skipped > 0 && `, ${importResult.skipped} ignoré${importResult.skipped !== 1 ? "s" : ""}`}.
             </p>
           </div>
-          <button onClick={cancelImport}><X size={16} className="text-green-400 hover:text-green-600" /></button>
+          <button onClick={cancelImport}><X size={16} className="text-green-400 hover:text-green-500" /></button>
         </div>
       )}
 
@@ -370,14 +371,14 @@ const MailContacts = () => {
             <button
               onClick={handleImport}
               disabled={importing}
-              className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              className={btn.primary}
             >
               {importing && <Loader2 size={14} className="animate-spin" />}
               {importing ? "Import en cours…" : `Importer ${parsedContacts.length} contact${parsedContacts.length !== 1 ? "s" : ""}`}
             </button>
             <button
               onClick={cancelImport}
-              className="px-4 py-2 text-sm border border-border rounded-xl hover:bg-muted/40 transition-colors"
+              className={btn.secondary}
             >
               Annuler
             </button>
@@ -406,7 +407,7 @@ const MailContacts = () => {
                   value={(form[key] as string) ?? ""}
                   onChange={(e) => setField(key, e.target.value)}
                   placeholder={placeholder}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
+                  className={field.input}
                 />
               </div>
             ))}
@@ -419,7 +420,7 @@ const MailContacts = () => {
               onChange={(e) => setField("notes", e.target.value)}
               placeholder="Informations complémentaires…"
               rows={2}
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
+              className={field.textarea}
             />
           </div>
 
@@ -429,14 +430,14 @@ const MailContacts = () => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              className={btn.primary}
             >
               {saving && <Loader2 size={14} className="animate-spin" />}
               {editId ? "Enregistrer" : "Ajouter"}
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="px-4 py-2 text-sm border border-border rounded-xl hover:bg-muted/40 transition-colors"
+              className={btn.secondary}
             >
               Annuler
             </button>
@@ -482,13 +483,13 @@ const MailContacts = () => {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => openEdit(c)}
-                            className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                            className={btn.icon}
                           >
                             <Pencil size={14} />
                           </button>
                           <button
                             onClick={() => handleDelete(c.id)}
-                            className="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                            className={btn.iconDanger}
                           >
                             <Trash2 size={14} />
                           </button>

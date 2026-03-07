@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Pencil, Trash2, X, Loader2, Search, UserPlus } from "lucide-react";
 import { CONTENT_TYPES } from "@/lib/db-types";
+import { btn, field } from "@/lib/ui-classes";
 
 interface Contact {
   id: string;
@@ -142,7 +143,7 @@ const MailTemplates = () => {
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
+          className={btn.primary}
         >
           <Plus size={16} />
           Nouveau template
@@ -169,7 +170,7 @@ const MailTemplates = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ex : Prise de contact initiale"
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
+                className={field.input}
               />
             </div>
 
@@ -190,8 +191,8 @@ const MailTemplates = () => {
                     onClick={() => setType(type === ct.value ? "" : ct.value)}
                     className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
                       type === ct.value
-                        ? "bg-black text-white border-black"
-                        : "bg-card text-foreground border-border hover:border-gray-400"
+                        ? "bg-foreground text-background border-foreground"
+                        : "bg-card text-foreground border-border hover:border-muted-foreground"
                     }`}
                   >
                     {ct.label}
@@ -211,7 +212,7 @@ const MailTemplates = () => {
                 onChange={(e) => setContext(e.target.value)}
                 rows={5}
                 placeholder="Ex : Prise de contact initiale suite à un forum. Ton direct, objectif = obtenir un RDV…"
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition resize-none"
+                className={field.textarea}
               />
             </div>
 
@@ -249,7 +250,7 @@ const MailTemplates = () => {
               )}
 
               <div ref={mentionRef} className="relative">
-                <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-muted/40 focus-within:ring-2 focus-within:ring-black/10 focus-within:border-black transition">
+                <div className={field.focusWrapper}>
                   <Search size={14} className="text-muted-foreground shrink-0" />
                   <input
                     type="text"
@@ -257,7 +258,7 @@ const MailTemplates = () => {
                     onChange={(e) => { setMentionSearch(e.target.value); setShowDropdown(true); }}
                     onFocus={() => setShowDropdown(true)}
                     placeholder="Rechercher un contact…"
-                    className="flex-1 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
+                    className="flex-1 text-sm text-foreground bg-transparent outline-none placeholder:text-muted-foreground"
                   />
                 </div>
 
@@ -299,14 +300,14 @@ const MailTemplates = () => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              className={btn.primary}
             >
               {saving && <Loader2 size={14} className="animate-spin" />}
               {editId ? "Enregistrer" : "Ajouter"}
             </button>
             <button
               onClick={() => setShowForm(false)}
-              className="px-4 py-2 text-sm border border-border rounded-xl hover:bg-muted/40 transition-colors"
+              className={btn.secondary}
             >
               Annuler
             </button>
@@ -351,13 +352,13 @@ const MailTemplates = () => {
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => openEdit(t)}
-                    className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    className={btn.icon}
                   >
                     <Pencil size={14} />
                   </button>
                   <button
                     onClick={() => handleDelete(t.id)}
-                    className="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                    className={btn.iconDanger}
                   >
                     <Trash2 size={14} />
                   </button>
