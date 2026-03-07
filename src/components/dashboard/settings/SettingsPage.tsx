@@ -736,6 +736,15 @@ const MembresTab = ({ canEdit }: { canEdit: boolean }) => {
 
   const filtered = members.filter((m) => m.full_name.toLowerCase().includes(search.toLowerCase()));
 
+  const ETUDES_POLES_SET = new Set(["etude", "qualite"]);
+  const getGrantableFeatures = (pole: PoleType, role: MemberRole): Feature[] =>
+    (FEATURES as readonly Feature[]).filter((f) => {
+      if (f === "supervision") return false; // réservé présidence/responsable
+      if (f === "etudes" && ETUDES_POLES_SET.has(pole)) return false;
+      if (f === "clients" && ETUDES_POLES_SET.has(pole)) return false;
+      return true;
+    });
+
   return (
     <div className="space-y-6">
       {selectedMember && (
@@ -874,27 +883,32 @@ const MembresTab = ({ canEdit }: { canEdit: boolean }) => {
                 <div className="flex-1 shrink-0">
                   {edit.role === "presidence" ? (
                     <span className="text-xs text-muted-foreground italic">Accès total</span>
-                  ) : (
-                    <div className="flex flex-wrap gap-1.5">
-                      {FEATURES.map((f) => {
-                        const active = edit.permissions.includes(f);
-                        return (
-                          <button
-                            key={f}
-                            type="button"
-                            onClick={() => togglePermission(member.id, f)}
-                            className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
-                              active
-                                ? "bg-foreground text-background border-foreground"
-                                : "bg-card text-muted-foreground border-border hover:border-muted-foreground hover:text-foreground"
-                            }`}
-                          >
-                            {FEATURE_LABELS[f]}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                  ) : (() => {
+                    const grantable = getGrantableFeatures(edit.pole, edit.role);
+                    return grantable.length === 0 ? (
+                      <span className="text-xs text-muted-foreground italic">Accès inclus dans le pôle</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1.5">
+                        {grantable.map((f) => {
+                          const active = edit.permissions.includes(f);
+                          return (
+                            <button
+                              key={f}
+                              type="button"
+                              onClick={() => togglePermission(member.id, f)}
+                              className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
+                                active
+                                  ? "bg-foreground text-background border-foreground"
+                                  : "bg-card text-muted-foreground border-border hover:border-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              {FEATURE_LABELS[f]}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Actions */}
