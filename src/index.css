@@ -199,6 +199,45 @@
 .capisen-sidebar { background-color: hsl(var(--background)); border-right: 1px solid hsl(var(--border)); }
 [data-theme="dark"] .capisen-sidebar { background-color: #07080f; border-right: none; }
 
+/* ── Centralized colored badges ─────────────────────────────────────────────
+   Light + dark handled in one place — reference these classes from components.
+   ─────────────────────────────────────────────────────────────────────────── */
+.badge-blue   { background-color: rgb(239 246 255); border-color: rgb(219 234 254); color: rgb(29  78  216); }
+.badge-violet { background-color: rgb(245 243 255); border-color: rgb(221 214 254); color: rgb(109 40  217); }
+.badge-orange { background-color: rgb(255 247 237); border-color: rgb(254 215 170); color: rgb(194 65  12);  }
+.badge-green  { background-color: rgb(240 253 244); border-color: rgb(187 247 208); color: rgb(21  128 61);  }
+.badge-teal   { background-color: rgb(240 253 250); border-color: rgb(153 246 228); color: rgb(15  118 110); }
+.badge-amber  { background-color: rgb(255 251 235); border-color: rgb(253 230 138); color: rgb(180 83  9);   }
+.badge-red    { background-color: rgb(254 242 242); border-color: rgb(254 202 202); color: rgb(185 28  28);  }
+
+[data-theme="dark"] .badge-blue   { background-color: rgb(59  130 246 / 0.1); border-color: rgb(59  130 246 / 0.25); color: rgb(147 197 253); }
+[data-theme="dark"] .badge-violet { background-color: rgb(139 92  246 / 0.1); border-color: rgb(139 92  246 / 0.25); color: rgb(196 181 253); }
+[data-theme="dark"] .badge-orange { background-color: rgb(249 115 22  / 0.1); border-color: rgb(249 115 22  / 0.25); color: rgb(253 186 116); }
+[data-theme="dark"] .badge-green  { background-color: rgb(34  197 94  / 0.1); border-color: rgb(34  197 94  / 0.25); color: rgb(134 239 172); }
+[data-theme="dark"] .badge-teal   { background-color: rgb(20  184 166 / 0.1); border-color: rgb(20  184 166 / 0.25); color: rgb(94  234 212); }
+[data-theme="dark"] .badge-amber  { background-color: rgb(245 158 11  / 0.1); border-color: rgb(245 158 11  / 0.25); color: rgb(252 211 77);  }
+[data-theme="dark"] .badge-red    { background-color: rgb(239 68  68  / 0.1); border-color: rgb(239 68  68  / 0.25); color: rgb(252 165 165); }
+
+/* ── Status badges (mission / étude) ─────────────────────────────────────── */
+.status-en-cours { background-color: rgb(219 234 254); color: rgb(29  78  216); }
+.status-termine  { background-color: rgb(187 247 208); color: rgb(21  128 61);  }
+
+[data-theme="dark"] .status-en-cours { background-color: rgb(59 130 246 / 0.1); color: rgb(147 197 253); }
+[data-theme="dark"] .status-termine  { background-color: rgb(34 197 94  / 0.1); color: rgb(134 239 172); }
+
+/* ── Small outline button (dashboard) ────────────────────────────────────── */
+.btn-sm-outline {
+  display: inline-flex; align-items: center; gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem; font-weight: 500;
+  border: 1px solid hsl(var(--border)); border-radius: 0.5rem;
+  background-color: hsl(var(--background)); color: hsl(var(--foreground));
+  transition: background-color 150ms;
+  cursor: pointer;
+}
+.btn-sm-outline:hover  { background-color: hsl(var(--muted) / 0.4); }
+.btn-sm-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* Fix couleur de fond injectée par le navigateur lors de l'autofill */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,

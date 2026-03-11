@@ -5,8 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { POLE_OPTIONS, MEMBER_ROLES, type PoleType, type MemberRole } from "@/lib/db-types";
 import { FEATURES, FEATURE_LABELS, type Feature } from "@/lib/permissions";
 import {
-  Camera, Check, ChevronDown, ChevronRight, Eye, EyeOff, Linkedin,
-  Loader2, Lock, Search, Shield, Trash2, Users, X,
+  Camera, Check, ChevronDown, ChevronRight, Download, Eye, EyeOff, FileText, Linkedin,
+  Loader2, Lock, Search, Shield, Trash2, Upload, Users, X,
 } from "lucide-react";
 import AvatarCropModal from "./AvatarCropModal";
 
@@ -248,6 +248,70 @@ const ProfilTab = ({
     setUploadingAvatar(false);
   };
 
+  // RIB
+  const ribInputRef = useRef<HTMLInputElement>(null);
+  const [ribUrl, setRibUrl] = useState<string | null>(profile?.rib_url ?? null);
+  const [uploadingRib, setUploadingRib] = useState(false);
+  const [ribError, setRibError] = useState<string | null>(null);
+  const showRib = profile?.pole === "intervenant" || profile?.pole === "etude";
+
+  useEffect(() => {
+    setRibUrl(profile?.rib_url ?? null);
+  }, [profile?.id]);
+
+  const handleRibUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setRibError("Le fichier ne doit pas dépasser 10 Mo.");
+      return;
+    }
+    setRibError(null);
+    setUploadingRib(true);
+    const ext = file.name.split(".").pop() ?? "pdf";
+    const path = `${user.id}/rib.${ext}`;
+    const { error: uploadErr } = await supabase.storage
+      .from("ribs")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadErr) {
+      setRibError("Erreur lors de l'upload.");
+      setUploadingRib(false);
+      return;
+    }
+    const { data: signedData } = await supabase.storage.from("ribs").createSignedUrl(path, 60);
+    const storedPath = path;
+    await supabase.from("profiles").update({ rib_url: storedPath }).eq("id", user.id);
+    await refreshProfile();
+    setRibUrl(storedPath);
+    setUploadingRib(false);
+    e.target.value = "";
+    // Open the signed URL to confirm upload
+    if (signedData?.signedUrl) window.open(signedData.signedUrl, "_blank");
+  };
+
+  const handleRibDownload = async () => {
+    if (!ribUrl) return;
+    setUploadingRib(true);
+    const { data } = await supabase.storage.from("ribs").createSignedUrl(ribUrl, 3600);
+    setUploadingRib(false);
+    if (data?.signedUrl) {
+      const a = document.createElement("a");
+      a.href = data.signedUrl;
+      a.download = "RIB";
+      a.click();
+    }
+  };
+
+  const handleRibRemove = async () => {
+    if (!user || !ribUrl) return;
+    setUploadingRib(true);
+    await supabase.storage.from("ribs").remove([ribUrl]);
+    await supabase.from("profiles").update({ rib_url: null }).eq("id", user.id);
+    await refreshProfile();
+    setRibUrl(null);
+    setUploadingRib(false);
+  };
+
   const poleLabel = POLE_OPTIONS.find((p) => p.value === profile?.pole)?.label ?? profile?.pole ?? "—";
   const initials = (profile?.full_name ?? "?").slice(0, 2).toUpperCase();
 
@@ -386,6 +450,63 @@ const ProfilTab = ({
             />
           </div>
         </div>
+
+        {/* RIB — visible pour les intervenants et le pôle étude */}
+        {showRib && (
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">RIB</label>
+            <p className="text-xs text-muted-foreground">
+              Votre RIB est utilisé pour le paiement de vos prestations. Il est uniquement visible par la présidence et le pôle trésorerie.
+            </p>
+            {ribError && <p className="text-xs text-red-500">{ribError}</p>}
+            {ribUrl ? (
+              <div className="flex items-center gap-2 p-3 rounded-xl border border-border bg-muted/30">
+                <FileText size={14} className="text-muted-foreground shrink-0" />
+                <span className="flex-1 text-sm text-foreground truncate">RIB déposé</span>
+                <button
+                  onClick={handleRibDownload}
+                  disabled={uploadingRib}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-muted/40 transition-colors disabled:opacity-50"
+                >
+                  {uploadingRib ? <Loader2 size={11} className="animate-spin" /> : <Download size={11} />}
+                  Télécharger
+                </button>
+                <button
+                  onClick={() => ribInputRef.current?.click()}
+                  disabled={uploadingRib}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-muted/40 transition-colors disabled:opacity-50"
+                >
+                  <Upload size={11} />
+                  Remplacer
+                </button>
+                <button
+                  onClick={handleRibRemove}
+                  disabled={uploadingRib}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-red-500 border border-red-500/20 rounded-lg hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 size={11} />
+                  Supprimer
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => ribInputRef.current?.click()}
+                disabled={uploadingRib}
+                className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-dashed border-border hover:border-foreground/30 hover:bg-muted/20 transition-colors text-sm text-muted-foreground disabled:opacity-50 w-full"
+              >
+                {uploadingRib ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                Déposer votre RIB (PDF, image)
+              </button>
+            )}
+            <input
+              ref={ribInputRef}
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleRibUpload}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
@@ -688,10 +809,16 @@ const MembresTab = ({ canEdit }: { canEdit: boolean }) => {
     edits[member.id] ?? { pole: member.pole, role: member.role, permissions: member.permissions ?? [] };
 
   const setEdit = (id: string, field: keyof EditState, value: string) => {
-    setEdits((prev) => ({
-      ...prev,
-      [id]: { ...getEdit(members.find((m) => m.id === id)!), [field]: value },
-    }));
+    setEdits((prev) => {
+      const member = members.find((m) => m.id === id)!;
+      const base = { ...getEdit(member), [field]: value };
+      // Passage au pôle intervenant : rôle normal forcé, permissions vidées
+      if (field === "pole" && value === "intervenant") {
+        base.role = "normal" as MemberRole;
+        base.permissions = [];
+      }
+      return { ...prev, [id]: base };
+    });
   };
 
   const togglePermission = (id: string, feature: Feature) => {
@@ -869,19 +996,25 @@ const MembresTab = ({ canEdit }: { canEdit: boolean }) => {
                   />
                 </div>
 
-                {/* Sélecteur rôle */}
+                {/* Sélecteur rôle (masqué pour les intervenants) */}
                 <div className="w-36 shrink-0">
-                  <InlineSelect
-                    value={edit.role}
-                    onChange={(v) => setEdit(member.id, "role", v)}
-                    options={MEMBER_ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] ?? r }))}
-                    width="w-full"
-                  />
+                  {edit.pole === "intervenant" ? (
+                    <span className="text-xs text-muted-foreground italic px-1">—</span>
+                  ) : (
+                    <InlineSelect
+                      value={edit.role}
+                      onChange={(v) => setEdit(member.id, "role", v)}
+                      options={MEMBER_ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] ?? r }))}
+                      width="w-full"
+                    />
+                  )}
                 </div>
 
-                {/* Permissions */}
+                {/* Permissions (masquées pour les intervenants) */}
                 <div className="flex-1 shrink-0">
-                  {edit.role === "presidence" ? (
+                  {edit.pole === "intervenant" ? (
+                    <span className="text-xs text-muted-foreground italic">Espace intervenant</span>
+                  ) : edit.role === "presidence" ? (
                     <span className="text-xs text-muted-foreground italic">Accès total</span>
                   ) : (() => {
                     const grantable = getGrantableFeatures(edit.pole, edit.role);

@@ -9,7 +9,7 @@ const DOC_TYPES = [
     code: "CE",
     file: "CE.pptx",
     name: "Cahier des Charges",
-    color: "bg-blue-50 border-blue-100 text-blue-700",
+    color: "badge-blue",
     description: "Document contractuel définissant les objectifs, le périmètre et les livrables de la mission.",
     fields: ["Nom de l'étude", "Client", "Interlocuteur", "Phases de mission", "Budget HT", "Dates de début/fin"],
   },
@@ -17,7 +17,7 @@ const DOC_TYPES = [
     code: "RM",
     file: "RM.pptx",
     name: "Récapitulatif de Mission",
-    color: "bg-violet-50 border-violet-100 text-violet-700",
+    color: "badge-violet",
     description: "Synthèse de la mission par intervenant : rôle, dates, rémunération et phases assignées.",
     fields: ["Intervenant (Prénom NOM)", "Email & téléphone", "Phases assignées", "Montant rétribution", "Dates"],
   },
@@ -25,7 +25,7 @@ const DOC_TYPES = [
     code: "ARM",
     file: "ARM.pptx",
     name: "Avenant au Récapitulatif de Mission",
-    color: "bg-orange-50 border-orange-100 text-orange-700",
+    color: "badge-orange",
     description: "Avenant au RM initial en cas de modification des conditions (phases, durée, rémunération).",
     fields: ["Référence RM lié", "Intervenant", "Modifications apportées", "Nouveau montant"],
   },
@@ -33,7 +33,7 @@ const DOC_TYPES = [
     code: "ACE",
     file: "ACE.pptx",
     name: "Attestation de Conformité Externe",
-    color: "bg-green-50 border-green-100 text-green-700",
+    color: "badge-green",
     description: "Attestation certifiant la bonne réalisation de la mission, signée par le client.",
     fields: ["Organisme client", "Président(e)", "Référence étude", "Date de fin", "Montant total TTC"],
   },
@@ -41,7 +41,7 @@ const DOC_TYPES = [
     code: "ACE MAIL",
     file: "ACE MAIL.pptx",
     name: "ACE — Version Mail",
-    color: "bg-teal-50 border-teal-100 text-teal-700",
+    color: "badge-teal",
     description: "Version simplifiée de l'ACE formatée pour envoi par email au client.",
     fields: ["Mêmes champs que ACE", "Email client", "Formule de politesse genrée"],
   },
@@ -49,7 +49,7 @@ const DOC_TYPES = [
     code: "PVRI",
     file: "PVRI.pptx",
     name: "Procès-Verbal de Recette Intermédiaire",
-    color: "bg-amber-50 border-amber-100 text-amber-700",
+    color: "badge-amber",
     description: "Validation intermédiaire d'une phase ou d'un livrable partiel de l'étude.",
     fields: ["Phase concernée", "Date du point de contrôle", "Livrable validé", "Signataires"],
   },
@@ -57,7 +57,7 @@ const DOC_TYPES = [
     code: "PVRF",
     file: "PVRF.pptx",
     name: "Procès-Verbal de Recette Finale",
-    color: "bg-red-50 border-red-100 text-red-700",
+    color: "badge-red",
     description: "Validation finale de l'ensemble de la mission, actant la clôture de l'étude.",
     fields: ["Toutes les phases", "Budget total TTC", "Date de fin de mission", "Signataires finaux"],
   },
@@ -153,7 +153,7 @@ const EtudesDocsTypes = () => {
                   <button
                     onClick={() => handleDownload(doc.file)}
                     disabled={status === "downloading" || status === "uploading"}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors disabled:opacity-50"
+                    className="btn-sm-outline"
                   >
                     {status === "downloading"
                       ? <Loader2 size={12} className="animate-spin" />
@@ -165,7 +165,7 @@ const EtudesDocsTypes = () => {
                   <button
                     onClick={() => fileInputRefs.current[doc.file]?.click()}
                     disabled={status === "downloading" || status === "uploading"}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors disabled:opacity-50"
+                    className="btn-sm-outline"
                   >
                     {status === "uploading"
                       ? <Loader2 size={12} className="animate-spin" />

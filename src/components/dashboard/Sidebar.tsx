@@ -4,7 +4,7 @@ import {
   BookOpen, Mail, ChevronDown,
   Lock, Wand2, Users, FileText, Package, History,
   BarChart3, FolderOpen, FilePlus, Building2, X, LogOut,
-  Sun, Moon, LayoutTemplate, Briefcase, UserPlus, List,
+  Sun, Moon, LayoutTemplate, Briefcase, UserPlus, List, ClipboardList,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import type { UserProfile } from "@/contexts/AuthContext";
@@ -73,9 +73,10 @@ const Sidebar = ({
   const isPresidence = profile?.role === "presidence";
   const userPole = profile?.pole;
   const isNouveauMembre = userPole === "nouveau";
+  const isIntervenant = userPole === "intervenant";
 
   const visiblePoles = isPresidence
-    ? POLE_OPTIONS.filter((p) => p.value !== "nouveau")
+    ? POLE_OPTIONS.filter((p) => p.value !== "nouveau" && p.value !== "intervenant")
     : POLE_OPTIONS.filter((p: (typeof POLE_OPTIONS)[number]) => p.value === userPole && p.value !== "nouveau");
 
   const formationsSubItems: SubItem[] = visiblePoles.map((p) => ({
@@ -90,6 +91,14 @@ const Sidebar = ({
   const clientsVisible     = canAccess(profile, "clients");
 
   const menuItems: MenuItem[] = [
+    // ── Espace intervenant ──────────────────────────────────────────────────────
+    {
+      key: "intervenant/missions",
+      label: "Mes missions",
+      icon: <ClipboardList size={16} />,
+      hidden: !isIntervenant,
+    },
+    // ── Espace membres ──────────────────────────────────────────────────────────
     {
       key: "formations",
       label: "Formations",
@@ -101,28 +110,29 @@ const Sidebar = ({
       key: "supervision",
       label: "Supervision",
       icon: <BarChart3 size={16} />,
-      hidden: !supervisionVisible || isNouveauMembre,
+      hidden: !supervisionVisible || isNouveauMembre || isIntervenant,
     },
     {
       key: "mails",
       label: "Mails",
       icon: <Mail size={16} />,
-      hidden: !mailsVisible || isNouveauMembre,
+      hidden: !mailsVisible || isNouveauMembre || isIntervenant,
       children: [
-        { key: "mails/compose", label: "Rédaction IA", icon: <Wand2 size={14} /> },
-        { key: "mails/contacts", label: "Contacts", icon: <Users size={14} /> },
-        { key: "mails/templates", label: "Templates", icon: <FileText size={14} /> },
-        { key: "mails/offres", label: "Offres", icon: <Package size={14} /> },
-        { key: "mails/history", label: "Historique", icon: <History size={14} /> },
+        { key: "mails/compose",   label: "Rédaction IA", icon: <Wand2 size={14} /> },
+        { key: "mails/contacts",  label: "Contacts",     icon: <Users size={14} /> },
+        { key: "mails/templates", label: "Templates",    icon: <FileText size={14} /> },
+        { key: "mails/offres",    label: "Offres",       icon: <Package size={14} /> },
+        { key: "mails/history",   label: "Historique",   icon: <History size={14} /> },
       ],
     },
     {
       key: "etudes",
       label: "Études",
       icon: <FolderOpen size={16} />,
-      hidden: !etudesVisible || isNouveauMembre,
+      hidden: !etudesVisible || isNouveauMembre || isIntervenant,
       children: [
-        { key: "etudes/generer",     label: "Générer",    icon: <FilePlus size={14} /> },
+        { key: "etudes/missions",   label: "Missions",   icon: <ClipboardList size={14} /> },
+        { key: "etudes/generer",    label: "Générer",    icon: <FilePlus size={14} /> },
         { key: "etudes/docs-types", label: "Docs Types", icon: <LayoutTemplate size={14} /> },
         { key: "etudes/historique", label: "Historique", icon: <History size={14} /> },
       ],
@@ -131,7 +141,7 @@ const Sidebar = ({
       key: "clients",
       label: "Clients",
       icon: <Briefcase size={16} />,
-      hidden: !clientsVisible || isNouveauMembre,
+      hidden: !clientsVisible || isNouveauMembre || isIntervenant,
       children: [
         { key: "clients/liste",   label: "Liste clients",    icon: <List size={14} /> },
         { key: "clients/inviter", label: "Inviter un client", icon: <UserPlus size={14} /> },

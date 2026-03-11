@@ -17,6 +17,8 @@ import FormationsPole from "@/components/dashboard/formations/FormationsPole";
 import EtudesGenerer from "@/components/dashboard/etudes/EtudesGenerer";
 import EtudesHistorique from "@/components/dashboard/etudes/EtudesHistorique";
 import EtudesDocsTypes from "@/components/dashboard/etudes/EtudesDocsTypes";
+import EtudesMissionsListe from "@/components/dashboard/missions/EtudesMissionsListe";
+import IntervenantMissions from "@/components/dashboard/missions/IntervenantMissions";
 import SettingsPage from "@/components/dashboard/settings/SettingsPage";
 import ClientsListe from "@/components/dashboard/clients/ClientsListe";
 import ClientsInviter from "@/components/dashboard/clients/ClientsInviter";
@@ -59,6 +61,17 @@ const DashboardContent = () => {
       return <SettingsPage defaultTab="profil" />;
     }
 
+    // Intervenants : accès limité à formations, missions, paramètres
+    if (
+      profile?.pole === "intervenant" &&
+      !activeView.startsWith("formations/") &&
+      !activeView.startsWith("intervenant/") &&
+      !activeView.startsWith("settings") &&
+      activeView !== "home"
+    ) {
+      return <AccessDenied />;
+    }
+
     if (activeView === "supervision") {
       return canAccess(profile, "supervision") ? <SupervisionGlobal /> : <AccessDenied />;
     }
@@ -88,20 +101,22 @@ const DashboardContent = () => {
     }
 
     switch (activeView) {
-      case "mails/compose":       return <MailCompose />;
-      case "mails/contacts":      return <MailContacts />;
-      case "mails/templates":     return <MailTemplates />;
-      case "mails/offres":        return <MailOffres />;
-      case "mails/history":       return <MailHistory />;
-      case "etudes/generer":      return <EtudesGenerer />;
-      case "etudes/docs-types":   return <EtudesDocsTypes />;
-      case "etudes/historique":   return <EtudesHistorique />;
-      case "clients/liste":       return <ClientsListe />;
-      case "clients/inviter":     return <ClientsInviter />;
-      case "clients/projets":     return <ClientsProjets />;
-      case "settings/membres":    return <SettingsPage defaultTab="membres" />;
-      case "settings/profil":     return <SettingsPage defaultTab="profil" />;
-      case "settings/securite":   return <SettingsPage defaultTab="securite" />;
+      case "mails/compose":         return <MailCompose />;
+      case "mails/contacts":        return <MailContacts />;
+      case "mails/templates":       return <MailTemplates />;
+      case "mails/offres":          return <MailOffres />;
+      case "mails/history":         return <MailHistory />;
+      case "etudes/missions":       return <EtudesMissionsListe />;
+      case "etudes/generer":        return <EtudesGenerer />;
+      case "etudes/docs-types":     return <EtudesDocsTypes />;
+      case "etudes/historique":     return <EtudesHistorique />;
+      case "clients/liste":         return <ClientsListe />;
+      case "clients/inviter":       return <ClientsInviter />;
+      case "clients/projets":       return <ClientsProjets />;
+      case "intervenant/missions":  return <IntervenantMissions />;
+      case "settings/membres":      return <SettingsPage defaultTab="membres" />;
+      case "settings/profil":       return <SettingsPage defaultTab="profil" />;
+      case "settings/securite":     return <SettingsPage defaultTab="securite" />;
       default:
         return <DashboardHome setActiveView={handleSetActiveView} />;
     }

@@ -19,6 +19,7 @@ export const POLE_OPTIONS = [
   { value: "etude",         label: "Étude" },
   { value: "qualite",       label: "Qualité" },
   { value: "presidence",    label: "Présidence" },
+  { value: "intervenant",   label: "Intervenant" },
 ] as const;
 
 export type PoleType = (typeof POLE_OPTIONS)[number]["value"];

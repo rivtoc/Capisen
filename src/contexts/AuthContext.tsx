@@ -14,6 +14,7 @@ export interface UserProfile {
   position: string | null;
   linkedin_url: string | null;
   permissions: string[] | null;
+  rib_url: string | null;
 }
 
 export interface ClientRecord {
