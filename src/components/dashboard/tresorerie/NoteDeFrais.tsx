@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Plus,
   X,
+  Trash2,
   ChevronDown,
   ChevronRight,
   Loader2,
@@ -107,6 +108,10 @@ const NoteDeFrais = () => {
 
   // Receipt download loading per expense id
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  // Delete confirmation + loading
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // File input refs per expense row index
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -268,6 +273,27 @@ const NoteDeFrais = () => {
       window.open(data.signedUrl, "_blank");
     }
     setDownloadingId(null);
+  };
+
+  // ── Delete report ──────────────────────────────────────────────────────────
+
+  const handleDelete = async (report: ExpenseReport) => {
+    setDeletingId(report.id);
+
+    // Supprimer les justificatifs du storage
+    const paths = report.expenses
+      .map((e) => e.receipt_url)
+      .filter((p): p is string => !!p);
+    if (paths.length > 0) {
+      await supabase.storage.from("expense-receipts").remove(paths);
+    }
+
+    // Supprimer la note (cascade supprime les dépenses)
+    await supabase.from("expense_reports").delete().eq("id", report.id);
+
+    setReports((prev) => prev.filter((r) => r.id !== report.id));
+    setConfirmDeleteId(null);
+    setDeletingId(null);
   };
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -480,10 +506,11 @@ const NoteDeFrais = () => {
                 key={report.id}
                 className="bg-card border border-border rounded-2xl overflow-hidden"
               >
-                {/* Card header — click to expand */}
+                {/* Card header */}
+                <div className="flex items-center">
                 <button
                   onClick={() => toggleExpand(report.id)}
-                  className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+                  className="flex-1 text-left px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors min-w-0"
                 >
                   {isOpen ? (
                     <ChevronDown size={16} className="text-muted-foreground shrink-0" />
@@ -512,6 +539,38 @@ const NoteDeFrais = () => {
                     </span>
                   </div>
                 </button>
+
+                {/* Delete zone */}
+                <div className="pr-4 shrink-0 flex items-center gap-2">
+                  {confirmDeleteId === report.id ? (
+                    <>
+                      <span className="text-xs text-muted-foreground">Confirmer ?</span>
+                      <button
+                        onClick={() => handleDelete(report)}
+                        disabled={deletingId === report.id}
+                        className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
+                      >
+                        {deletingId === report.id ? <Loader2 size={12} className="animate-spin" /> : "Oui"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        disabled={deletingId === report.id}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Annuler
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDeleteId(report.id)}
+                      className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                      title="Supprimer cette note"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+                </div>
 
                 {/* Expanded expenses */}
                 {isOpen && (
