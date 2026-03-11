@@ -23,6 +23,9 @@ import SettingsPage from "@/components/dashboard/settings/SettingsPage";
 import ClientsListe from "@/components/dashboard/clients/ClientsListe";
 import ClientsInviter from "@/components/dashboard/clients/ClientsInviter";
 import ClientsProjets from "@/components/dashboard/clients/ClientsProjets";
+import NoteDeFrais from "@/components/dashboard/tresorerie/NoteDeFrais";
+import TresorerieGestion from "@/components/dashboard/tresorerie/TresorerieGestion";
+import TresorerieVote from "@/components/dashboard/tresorerie/TresorerieVote";
 import type { PoleType } from "@/lib/db-types";
 import { canAccess } from "@/lib/permissions";
 
@@ -31,9 +34,16 @@ const DashboardContent = () => {
   const navigate = useNavigate();
   const { resolvedTheme } = useTheme();
   const effectiveTheme = resolvedTheme ?? (localStorage.getItem("capisen-theme") ?? "dark");
-  const [activeView, setActiveView] = useState(
-    () => localStorage.getItem("capisen_activeView") ?? "home"
-  );
+  const [activeView, setActiveView] = useState(() => {
+    // Login actif → toujours home (flag posé par AuthContext au SIGNED_IN)
+    if (sessionStorage.getItem("capisen_fresh_login")) {
+      sessionStorage.removeItem("capisen_fresh_login");
+      sessionStorage.removeItem("capisen_activeView");
+      return "home";
+    }
+    // Rechargement de page → restaurer la dernière vue
+    return sessionStorage.getItem("capisen_activeView") ?? "home";
+  });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -43,7 +53,7 @@ const DashboardContent = () => {
 
   const handleSetActiveView = (view: string) => {
     setActiveView(view);
-    localStorage.setItem("capisen_activeView", view);
+    sessionStorage.setItem("capisen_activeView", view);
     if (window.innerWidth < 1024) {
       setSidebarOpen(false);
     }
@@ -100,6 +110,15 @@ const DashboardContent = () => {
       return <AccessDenied />;
     }
 
+    if (activeView === "tresorerie/gestion") {
+      const ok = profile?.pole === "tresorerie" || profile?.role === "presidence" || profile?.pole === "secretariat";
+      if (!ok) return <AccessDenied />;
+    }
+
+    if (activeView === "tresorerie/notes" && (profile?.pole === "intervenant" || profile?.pole === "nouveau")) {
+      return <AccessDenied />;
+    }
+
     switch (activeView) {
       case "mails/compose":         return <MailCompose />;
       case "mails/contacts":        return <MailContacts />;
@@ -114,6 +133,9 @@ const DashboardContent = () => {
       case "clients/inviter":       return <ClientsInviter />;
       case "clients/projets":       return <ClientsProjets />;
       case "intervenant/missions":  return <IntervenantMissions />;
+      case "tresorerie/notes":      return <NoteDeFrais />;
+      case "tresorerie/vote":       return <TresorerieVote />;
+      case "tresorerie/gestion":    return <TresorerieGestion />;
       case "settings/membres":      return <SettingsPage defaultTab="membres" />;
       case "settings/profil":       return <SettingsPage defaultTab="profil" />;
       case "settings/securite":     return <SettingsPage defaultTab="securite" />;

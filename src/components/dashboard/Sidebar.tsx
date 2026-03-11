@@ -5,6 +5,7 @@ import {
   Lock, Wand2, Users, FileText, Package, History,
   BarChart3, FolderOpen, FilePlus, Building2, X, LogOut,
   Sun, Moon, LayoutTemplate, Briefcase, UserPlus, List, ClipboardList,
+  Wallet, ReceiptText, Settings2, Scale,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import type { UserProfile } from "@/contexts/AuthContext";
@@ -89,6 +90,11 @@ const Sidebar = ({
   const supervisionVisible = canAccess(profile, "supervision");
   const etudesVisible      = canAccess(profile, "etudes");
   const clientsVisible     = canAccess(profile, "clients");
+  const isTresorerie       = userPole === "tresorerie";
+  const isSecretariat      = userPole === "secretariat";
+  const canManageNDF       = isTresorerie || isPresidence || isSecretariat;
+  // Note de frais : tous les vrais membres (pas intervenant, pas nouveau)
+  const canSeeNDF          = !isIntervenant && !isNouveauMembre;
 
   const menuItems: MenuItem[] = [
     // ── Espace intervenant ──────────────────────────────────────────────────────
@@ -146,6 +152,17 @@ const Sidebar = ({
         { key: "clients/liste",   label: "Liste clients",    icon: <List size={14} /> },
         { key: "clients/inviter", label: "Inviter un client", icon: <UserPlus size={14} /> },
         { key: "clients/projets", label: "Projets",           icon: <FolderOpen size={14} /> },
+      ],
+    },
+    {
+      key: "tresorerie",
+      label: "Trésorerie",
+      icon: <Wallet size={16} />,
+      hidden: !canSeeNDF,
+      children: [
+        { key: "tresorerie/notes",   label: "Note de frais",        icon: <ReceiptText size={14} /> },
+        { key: "tresorerie/vote",    label: "Vote",                  icon: <Scale size={14} /> },
+        ...(canManageNDF ? [{ key: "tresorerie/gestion", label: "Gérer les notes", icon: <Settings2 size={14} /> }] : []),
       ],
     },
   ];

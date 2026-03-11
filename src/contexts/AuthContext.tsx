@@ -169,13 +169,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // AVANT de réinitialiser le timestamp (bug : updateActivity au mount écrasait la vérif)
         if (event === "INITIAL_SESSION") {
           const lastActivity = parseInt(localStorage.getItem(ACTIVITY_KEY) ?? "0", 10);
-          if (lastActivity > 0 && Date.now() - lastActivity > INACTIVITY_TIMEOUT) {
+          // Si la clé est absente (= 0) OU si l'inactivité dépasse le timeout → déconnexion
+          // Note: lastActivity === 0 couvre le cas où la clé a été supprimée lors d'une
+          // déconnexion par inactivité précédente, ce qui empêchait le re-login silencieux.
+          if (lastActivity === 0 || Date.now() - lastActivity > INACTIVITY_TIMEOUT) {
             localStorage.removeItem(ACTIVITY_KEY);
             supabase.auth.signOut();
             setLoading(false);
             return;
           }
           // Session valide → on enregistre l'activité maintenant
+          updateActivity();
+        }
+
+        // Login actif → on enregistre immédiatement l'activité
+        if (event === "SIGNED_IN") {
           updateActivity();
         }
 

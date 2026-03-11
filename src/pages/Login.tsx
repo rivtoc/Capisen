@@ -41,9 +41,11 @@ const Login = () => {
     setError(null);
     setLoading(true);
 
+    sessionStorage.setItem("capisen_fresh_login", "1");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
+      sessionStorage.removeItem("capisen_fresh_login");
       if (error.message.toLowerCase().includes("email not confirmed")) {
         setError("Vérifie ta boîte mail et clique sur le lien de confirmation.");
       } else {
