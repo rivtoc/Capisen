@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { ChevronDown, ChevronRight, Download, Loader2, ClipboardList } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Loader2, ClipboardList, Trash2 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,6 +94,8 @@ const TresorerieGestion = () => {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [voteCounts, setVoteCounts] = useState<Record<string, { pour: number; contre: number }>>({});
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
 
@@ -169,6 +171,25 @@ const TresorerieGestion = () => {
     }
 
     setSavingId(null);
+  };
+
+  // ── Delete report ──────────────────────────────────────────────────────────
+
+  const handleDelete = async (report: ExpenseReport) => {
+    setDeletingId(report.id);
+
+    const paths = report.expenses
+      .map((e) => e.receipt_url)
+      .filter((p): p is string => !!p);
+    if (paths.length > 0) {
+      await supabase.storage.from("expense-receipts").remove(paths);
+    }
+
+    await supabase.from("expense_reports").delete().eq("id", report.id);
+
+    setReports((prev) => prev.filter((r) => r.id !== report.id));
+    setConfirmDeleteId(null);
+    setDeletingId(null);
   };
 
   // ── Receipt download ───────────────────────────────────────────────────────
@@ -262,45 +283,78 @@ const TresorerieGestion = () => {
                 className="bg-card border border-border rounded-2xl overflow-hidden"
               >
                 {/* Card header */}
-                <button
-                  onClick={() => toggleExpand(report.id)}
-                  className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors"
-                >
-                  {isOpen ? (
-                    <ChevronDown size={16} className="text-muted-foreground shrink-0" />
-                  ) : (
-                    <ChevronRight size={16} className="text-muted-foreground shrink-0" />
-                  )}
+                <div className="flex items-center">
+                  <button
+                    onClick={() => toggleExpand(report.id)}
+                    className="flex-1 text-left px-5 py-4 flex items-center gap-3 hover:bg-muted/30 transition-colors min-w-0"
+                  >
+                    {isOpen ? (
+                      <ChevronDown size={16} className="text-muted-foreground shrink-0" />
+                    ) : (
+                      <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+                    )}
 
-                  {/* Member avatar placeholder */}
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <span className="text-xs font-bold text-muted-foreground uppercase">
-                      {report.profiles?.full_name?.charAt(0) ?? "?"}
-                    </span>
-                  </div>
+                    {/* Member avatar placeholder */}
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-muted-foreground uppercase">
+                        {report.profiles?.full_name?.charAt(0) ?? "?"}
+                      </span>
+                    </div>
 
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      {report.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {report.profiles?.full_name ?? "Membre inconnu"} ·{" "}
-                      {formatDate(report.created_at)} · {report.expenses.length} dépense
-                      {report.expenses.length !== 1 ? "s" : ""}
-                    </p>
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {report.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {report.profiles?.full_name ?? "Membre inconnu"} ·{" "}
+                        {formatDate(report.created_at)} · {report.expenses.length} dépense
+                        {report.expenses.length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-sm font-semibold text-foreground">
-                      {formatAmount(total)}
-                    </span>
-                    <span
-                      className={`text-xs font-medium px-2.5 py-1 rounded-full ${status.className}`}
-                    >
-                      {status.label}
-                    </span>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-sm font-semibold text-foreground">
+                        {formatAmount(total)}
+                      </span>
+                      <span
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full ${status.className}`}
+                      >
+                        {status.label}
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Delete zone */}
+                  <div className="pr-4 shrink-0 flex items-center gap-2">
+                    {confirmDeleteId === report.id ? (
+                      <>
+                        <span className="text-xs text-muted-foreground">Confirmer ?</span>
+                        <button
+                          onClick={() => handleDelete(report)}
+                          disabled={deletingId === report.id}
+                          className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
+                        >
+                          {deletingId === report.id ? <Loader2 size={12} className="animate-spin" /> : "Oui"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          disabled={deletingId === report.id}
+                          className="text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          Annuler
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(report.id)}
+                        className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                        title="Supprimer cette note"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
-                </button>
+                </div>
 
                 {/* Expanded content */}
                 {isOpen && (
