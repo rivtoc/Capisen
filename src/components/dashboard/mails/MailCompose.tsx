@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { Wand2, Loader2, Copy, Check, Save, X, Search, UserPlus, SendHorizonal, RotateCcw } from "lucide-react";
+import { Wand2, Loader2, Copy, Check, Save, X, Search, UserPlus, SendHorizonal, RotateCcw, ChevronDown } from "lucide-react";
 import { CONTENT_TYPES } from "@/lib/db-types";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -57,6 +57,9 @@ const MailCompose = () => {
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const mentionRef = useRef<HTMLDivElement>(null);
 
+  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+  const templateRef = useRef<HTMLDivElement>(null);
+
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +90,9 @@ const MailCompose = () => {
       if (mentionRef.current && !mentionRef.current.contains(e.target as Node)) {
         setShowMentionDropdown(false);
         setMentionSearch("");
+      }
+      if (templateRef.current && !templateRef.current.contains(e.target as Node)) {
+        setShowTemplateDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -399,16 +405,41 @@ const MailCompose = () => {
             Aucun template pour ce type — crée-en un dans la section Templates.
           </p>
         ) : (
-          <select
-            value={selectedTemplate}
-            onChange={(e) => handleTemplateChange(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-border bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition appearance-none"
-          >
-            <option value="">Sélectionne un template…</option>
-            {filteredTemplates.map((t) => (
-              <option key={t.id} value={t.id}>{t.title}</option>
-            ))}
-          </select>
+            <div ref={templateRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setShowTemplateDropdown((o) => !o)}
+              className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-border bg-muted/40 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 transition"
+            >
+              <span className={selectedTemplate ? "text-foreground" : "text-muted-foreground"}>
+                {filteredTemplates.find((t) => t.id === selectedTemplate)?.title ?? "Sélectionne un template…"}
+              </span>
+              <ChevronDown
+                size={14}
+                className={`text-muted-foreground shrink-0 transition-transform duration-150 ${showTemplateDropdown ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {showTemplateDropdown && (
+              <div className="absolute z-30 mt-1.5 w-full bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                <div className="max-h-56 overflow-y-auto py-1">
+                  {filteredTemplates.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => { handleTemplateChange(t.id); setShowTemplateDropdown(false); }}
+                      className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-left hover:bg-muted/60 transition-colors"
+                    >
+                      <span className={selectedTemplate === t.id ? "text-foreground font-medium" : "text-foreground"}>
+                        {t.title}
+                      </span>
+                      {selectedTemplate === t.id && <Check size={13} className="text-foreground shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

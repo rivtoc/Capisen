@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-import { FileText, Download, Loader2, AlertCircle, ChevronDown, CheckSquare, Square } from "lucide-react";
-import { field } from "@/lib/ui-classes";
+import { useState, useEffect, useRef } from "react";
+import { FileText, Download, Loader2, AlertCircle, ChevronDown, CheckSquare, Square, Check } from "lucide-react";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:3001";
 
@@ -16,6 +15,74 @@ const DOC_TYPES = [
 
 type Status = "idle" | "loading-studies" | "ready" | "generating" | "done" | "error";
 
+// ─── Custom dropdown ──────────────────────────────────────────────────────────
+
+interface SelectProps {
+  value: string;
+  options: string[];
+  placeholder?: string;
+  disabled?: boolean;
+  onChange: (v: string) => void;
+}
+
+const CustomSelect = ({ value, options, placeholder = "— Sélectionner —", disabled, onChange }: SelectProps) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-foreground disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring/20 transition"
+      >
+        <span className={value ? "text-foreground" : "text-muted-foreground"}>
+          {value || placeholder}
+        </span>
+        <ChevronDown
+          size={14}
+          className={`text-muted-foreground shrink-0 transition-transform duration-150 ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1.5 w-full bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+          <div className="max-h-56 overflow-y-auto py-1">
+            {options.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-muted-foreground">Aucune étude disponible.</p>
+            ) : (
+              options.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => { onChange(opt); setOpen(false); }}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-left hover:bg-muted/60 transition-colors"
+                >
+                  <span className={value === opt ? "text-foreground font-medium" : "text-foreground"}>
+                    {opt}
+                  </span>
+                  {value === opt && <Check size={13} className="text-foreground shrink-0" />}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const EtudesGenerer = () => {
   const [status, setStatus] = useState<Status>("idle");
   const [studies, setStudies] = useState<string[]>([]);
@@ -26,7 +93,6 @@ const EtudesGenerer = () => {
     new Set(DOC_TYPES.map((d) => d.id))
   );
 
-  // Charge la liste des études dès le montage
   useEffect(() => {
     setStatus("loading-studies");
     fetch(`${SERVER_URL}/api/etudes/studies`)
@@ -59,7 +125,6 @@ const EtudesGenerer = () => {
 
   const handleGenerate = async () => {
     if (!selected) return;
-    // Clean previous download
     if (downloadUrl) URL.revokeObjectURL(downloadUrl);
     setDownloadUrl(null);
     setStatus("generating");
@@ -78,8 +143,7 @@ const EtudesGenerer = () => {
       }
 
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      setDownloadUrl(url);
+      setDownloadUrl(URL.createObjectURL(blob));
       setStatus("done");
     } catch (e: unknown) {
       setErrorMsg(e instanceof Error ? e.message : "Erreur inconnue.");
@@ -98,15 +162,12 @@ const EtudesGenerer = () => {
         if (Array.isArray(data)) { setStudies(data); setStatus("ready"); }
         else throw new Error((data as { error: string }).error);
       })
-      .catch((e: Error) => {
-        setErrorMsg(e.message);
-        setStatus("error");
-      });
+      .catch((e: Error) => { setErrorMsg(e.message); setStatus("error"); });
   };
 
   const isGenerating = status === "generating";
-  const isLoading = status === "loading-studies";
-  const isReady = status === "ready" || status === "done" || status === "generating";
+  const isLoading   = status === "loading-studies";
+  const isReady     = status === "ready" || status === "done" || status === "generating";
   const canGenerate = isReady && !!selected && !isGenerating;
 
   return (
@@ -120,19 +181,19 @@ const EtudesGenerer = () => {
 
       {/* Erreur globale */}
       {status === "error" && (
-        <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-2xl px-5 py-4 mb-6">
+        <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-2xl px-5 py-4 mb-6">
           <AlertCircle size={18} className="text-red-500 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-red-800">Erreur</p>
-            <p className="text-sm text-red-700 mt-0.5">{errorMsg}</p>
-            <p className="text-xs text-red-600 mt-1">
+            <p className="text-sm font-medium text-red-600 dark:text-red-400">Erreur</p>
+            <p className="text-sm text-red-600 dark:text-red-400 mt-0.5">{errorMsg}</p>
+            <p className="text-xs text-red-500/80 mt-1">
               Assure-toi que le serveur Express est démarré (<code className="font-mono">npm run dev:all</code>)
               et que Python avec les dépendances est disponible.
             </p>
           </div>
           <button
             onClick={handleRetry}
-            className="text-xs font-medium text-red-700 underline underline-offset-2 shrink-0"
+            className="text-xs font-medium text-red-600 dark:text-red-400 underline underline-offset-2 shrink-0"
           >
             Réessayer
           </button>
@@ -150,20 +211,13 @@ const EtudesGenerer = () => {
               Chargement des études…
             </div>
           ) : (
-            <div className="relative">
-              <select
-                value={selected}
-                onChange={(e) => { setSelected(e.target.value); setDownloadUrl(null); setStatus("ready"); }}
-                disabled={!isReady || isGenerating}
-                className={`${field.select} pr-9`}
-              >
-                <option value="">— Sélectionner une étude —</option>
-                {studies.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            </div>
+            <CustomSelect
+              value={selected}
+              options={studies}
+              placeholder="— Sélectionner une étude —"
+              disabled={!isReady || isGenerating}
+              onChange={(v) => { setSelected(v); setDownloadUrl(null); setStatus("ready"); }}
+            />
           )}
         </div>
 
@@ -189,9 +243,7 @@ const EtudesGenerer = () => {
                     ? <CheckSquare size={15} className="text-foreground shrink-0" />
                     : <Square size={15} className="text-muted-foreground shrink-0" />
                   }
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm text-foreground">{doc.label}</span>
-                  </div>
+                  <span className="text-sm text-foreground flex-1">{doc.label}</span>
                   {doc.always && (
                     <span className="text-[10px] text-muted-foreground/60 font-normal shrink-0">standard</span>
                   )}
@@ -217,10 +269,10 @@ const EtudesGenerer = () => {
 
       {/* Téléchargement */}
       {status === "done" && downloadUrl && (
-        <div className="mt-4 bg-green-50 border border-green-100 rounded-2xl p-5 flex items-center gap-4">
+        <div className="mt-4 bg-green-500/10 border border-green-500/20 rounded-2xl p-5 flex items-center gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-green-800">Documents générés !</p>
-            <p className="text-xs text-green-700 mt-0.5">
+            <p className="text-sm font-semibold text-green-700 dark:text-green-400">Documents générés !</p>
+            <p className="text-xs text-green-600 dark:text-green-500 mt-0.5">
               ZIP contenant tous les fichiers .pptx pour l'étude{" "}
               <span className="font-medium">{selected}</span>.
             </p>
@@ -228,7 +280,7 @@ const EtudesGenerer = () => {
           <a
             href={downloadUrl}
             download="documents.zip"
-            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white text-sm font-semibold rounded-xl hover:bg-green-800 transition-colors shrink-0"
+            className="flex items-center gap-2 px-4 py-2 bg-foreground text-background text-sm font-semibold rounded-xl hover:bg-foreground/90 transition-colors shrink-0"
           >
             <Download size={14} />
             Télécharger

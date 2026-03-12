@@ -246,3 +246,20 @@ input:-webkit-autofill:focus {
   -webkit-text-fill-color: #1e1e1e;
   transition: background-color 9999s ease-in-out 0s;
 }
+
+/* ── Champs de formulaire en dark mode ──────────────────────────────────────
+   Tous les input/select/textarea héritent du bon fond en dark mode,
+   quelle que soit la classe Tailwind utilisée dans le composant.
+   ─────────────────────────────────────────────────────────────────────────── */
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: hsl(var(--muted) / 0.4);
+  color: hsl(var(--foreground));
+}
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] input:-webkit-autofill:hover,
+[data-theme="dark"] input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px hsl(220 15% 18%) inset;
+  -webkit-text-fill-color: hsl(var(--foreground));
+}
