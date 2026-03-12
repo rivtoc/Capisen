@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, Download, Loader2, AlertCircle, ChevronDown, CheckSquare, Square } from "lucide-react";
+import { field } from "@/lib/ui-classes";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:3001";
 
@@ -154,7 +155,7 @@ const EtudesGenerer = () => {
                 value={selected}
                 onChange={(e) => { setSelected(e.target.value); setDownloadUrl(null); setStatus("ready"); }}
                 disabled={!isReady || isGenerating}
-                className="w-full px-4 py-2.5 pr-9 rounded-xl border border-border bg-background text-sm text-foreground appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring"
+                className={`${field.select} pr-9`}
               >
                 <option value="">— Sélectionner une étude —</option>
                 {studies.map((s) => (

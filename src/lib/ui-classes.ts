@@ -26,6 +26,9 @@ export const field = {
   /** Textarea standard */
   textarea:
     "w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring transition resize-none",
+  /** Select standard (même style que input) */
+  select:
+    "w-full px-4 py-2.5 rounded-xl border border-border bg-muted/40 text-sm text-foreground appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring transition",
   /** Barre de recherche avec icône à gauche (pl-9) */
   search:
     "w-full pl-9 pr-4 py-2 text-sm border border-border rounded-xl bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/20",
