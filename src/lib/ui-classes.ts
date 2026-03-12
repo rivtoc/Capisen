@@ -12,6 +12,8 @@ export const btn = {
     "px-4 py-2 text-sm border border-border rounded-xl hover:bg-muted/40 text-foreground transition-colors",
   /** Bouton icône neutre */
   icon: "p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors",
+  /** Bouton icône actif (ex: édition en cours) */
+  iconActive: "p-1.5 rounded-lg bg-foreground/10 text-foreground transition-colors",
   /** Bouton icône destructif */
   iconDanger:
     "p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors",

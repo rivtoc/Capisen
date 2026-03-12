@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Pencil, Trash2, X, Loader2, Upload, CheckCircle2, AlertCircle, Search } from "lucide-react";
@@ -104,7 +104,7 @@ const MailContacts = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);   // inline edit
   const [form, setForm] = useState<ContactForm>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -142,7 +142,7 @@ const MailContacts = () => {
     });
     setEditId(c.id);
     setError(null);
-    setShowForm(true);
+    setShowForm(false); // ferme le formulaire d'ajout si ouvert
   };
 
   const setField = (key: keyof ContactForm, value: string) => {
@@ -162,6 +162,7 @@ const MailContacts = () => {
     }
     await fetchContacts();
     setShowForm(false);
+    setEditId(null);
     setSaving(false);
   };
 
@@ -430,13 +431,11 @@ const MailContacts = () => {
         </div>
       )}
 
-      {/* Formulaire ajout/édition manuel */}
+      {/* Formulaire ajout uniquement */}
       {showForm && (
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-foreground">
-              {editId ? "Modifier le contact" : "Nouveau contact"}
-            </h3>
+            <h3 className="text-sm font-semibold text-foreground">Nouveau contact</h3>
             <button onClick={() => setShowForm(false)}>
               <X size={16} className="text-muted-foreground hover:text-foreground transition-colors" />
             </button>
@@ -471,18 +470,11 @@ const MailContacts = () => {
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
           <div className="flex gap-3 mt-4">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className={btn.primary}
-            >
+            <button onClick={handleSave} disabled={saving} className={btn.primary}>
               {saving && <Loader2 size={14} className="animate-spin" />}
-              {editId ? "Enregistrer" : "Ajouter"}
+              Ajouter
             </button>
-            <button
-              onClick={() => setShowForm(false)}
-              className={btn.secondary}
-            >
+            <button onClick={() => setShowForm(false)} className={btn.secondary}>
               Annuler
             </button>
           </div>
@@ -518,28 +510,72 @@ const MailContacts = () => {
                   </tr>
                 ) : (
                   filtered.map((c) => (
-                    <tr key={c.id} className="hover:bg-muted/40 transition-colors">
-                      <td className="px-4 py-3 font-medium text-foreground">{c.full_name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{c.company ?? "—"}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{c.job_title ?? "—"}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{c.email ?? "—"}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => openEdit(c)}
-                            className={btn.icon}
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(c.id)}
-                            className={btn.iconDanger}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                    <React.Fragment key={c.id}>
+                      <tr className={`transition-colors ${editId === c.id ? "bg-muted/30" : "hover:bg-muted/40"}`}>
+                        <td className="px-4 py-3 font-medium text-foreground">{c.full_name}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{c.company ?? "—"}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{c.job_title ?? "—"}</td>
+                        <td className="px-4 py-3 text-muted-foreground">{c.email ?? "—"}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => editId === c.id ? setEditId(null) : openEdit(c)}
+                              className={editId === c.id ? btn.iconActive : btn.icon}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(c.id)}
+                              className={btn.iconDanger}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Ligne d'édition inline */}
+                      {editId === c.id && (
+                        <tr className="bg-muted/20 border-t border-border">
+                          <td colSpan={5} className="px-4 py-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                              {fields.map(({ key, label, placeholder }) => (
+                                <div key={key} className="flex flex-col gap-1">
+                                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</label>
+                                  <input
+                                    type="text"
+                                    value={(form[key] as string) ?? ""}
+                                    onChange={(e) => setField(key, e.target.value)}
+                                    placeholder={placeholder}
+                                    className={field.input}
+                                  />
+                                </div>
+                              ))}
+                              <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notes</label>
+                                <textarea
+                                  value={form.notes ?? ""}
+                                  onChange={(e) => setField("notes", e.target.value)}
+                                  placeholder="Informations complémentaires…"
+                                  rows={2}
+                                  className={field.textarea}
+                                />
+                              </div>
+                            </div>
+                            {error && <p className="mb-2 text-xs text-red-600">{error}</p>}
+                            <div className="flex gap-2">
+                              <button onClick={handleSave} disabled={saving} className={btn.primary}>
+                                {saving && <Loader2 size={13} className="animate-spin" />}
+                                Enregistrer
+                              </button>
+                              <button onClick={() => setEditId(null)} className={btn.secondary}>
+                                Annuler
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))
                 )}
               </tbody>
