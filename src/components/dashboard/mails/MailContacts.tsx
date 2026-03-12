@@ -24,6 +24,7 @@ type ParsedContact = ContactForm;
 
 interface ImportResult {
   imported: number;
+  updated: number;
   skipped: number;
 }
 
@@ -197,25 +198,67 @@ const MailContacts = () => {
     if (!parsedContacts) return;
     setImporting(true);
 
-    // On insère par batch de 50
-    let imported = 0;
-    let skipped = 0;
-    const chunks = [];
-    for (let i = 0; i < parsedContacts.length; i += 50) {
-      chunks.push(parsedContacts.slice(i, i + 50));
-    }
+    // 1. Récupérer les contacts existants (avec id + linkedin_url + company)
+    const { data: existing } = await supabase
+      .from("contacts")
+      .select("id, linkedin_url, company")
+      .eq("user_id", user?.id);
 
-    for (const chunk of chunks) {
-      const { error: e, data } = await supabase.from("contacts").insert(chunk.map((c) => ({ ...c, user_id: user?.id }))).select();
-      if (e) {
-        skipped += chunk.length;
+    // Map linkedin_url → { id, company } pour lookup rapide
+    const existingByUrl = new Map(
+      (existing ?? [])
+        .filter((c) => c.linkedin_url)
+        .map((c) => [c.linkedin_url, { id: c.id, company: c.company }])
+    );
+
+    const toInsert: ParsedContact[] = [];
+    const toUpdate: { id: string; company: string }[] = [];
+    let skipped = 0;
+
+    for (const c of parsedContacts) {
+      if (!c.linkedin_url) {
+        // Pas d'URL LinkedIn → on insère sans chercher à dédupliquer
+        toInsert.push(c);
+        continue;
+      }
+
+      const existing = existingByUrl.get(c.linkedin_url);
+      if (!existing) {
+        // Nouveau contact
+        toInsert.push(c);
+      } else if (c.company && c.company !== existing.company) {
+        // Déjà connu, entreprise différente → mise à jour
+        toUpdate.push({ id: existing.id, company: c.company });
       } else {
-        imported += data?.length ?? 0;
+        // Identique → ignoré
+        skipped++;
       }
     }
 
+    let imported = 0;
+    let updated = 0;
+
+    // 2. Insérer les nouveaux par batch de 50
+    for (let i = 0; i < toInsert.length; i += 50) {
+      const chunk = toInsert.slice(i, i + 50);
+      const { data } = await supabase
+        .from("contacts")
+        .insert(chunk.map((c) => ({ ...c, user_id: user?.id })))
+        .select();
+      imported += data?.length ?? 0;
+    }
+
+    // 3. Mettre à jour l'entreprise des contacts existants (un par un)
+    for (const { id, company } of toUpdate) {
+      const { error } = await supabase
+        .from("contacts")
+        .update({ company })
+        .eq("id", id);
+      if (!error) updated++;
+    }
+
     await fetchContacts();
-    setImportResult({ imported, skipped });
+    setImportResult({ imported, updated, skipped });
     setParsedContacts(null);
     setImporting(false);
   };
@@ -315,8 +358,9 @@ const MailContacts = () => {
           <div className="flex-1">
             <p className="text-sm font-medium text-green-600 dark:text-green-400">Import terminé</p>
             <p className="text-sm text-green-600 dark:text-green-400 mt-0.5">
-              {importResult.imported} contact{importResult.imported !== 1 ? "s" : ""} importé{importResult.imported !== 1 ? "s" : ""}
-              {importResult.skipped > 0 && `, ${importResult.skipped} ignoré${importResult.skipped !== 1 ? "s" : ""}`}.
+              {importResult.imported} contact{importResult.imported !== 1 ? "s" : ""} ajouté{importResult.imported !== 1 ? "s" : ""}
+              {importResult.updated > 0 && `, ${importResult.updated} entreprise${importResult.updated !== 1 ? "s" : ""} mise${importResult.updated !== 1 ? "s" : ""} à jour`}
+              {importResult.skipped > 0 && `, ${importResult.skipped} inchangé${importResult.skipped !== 1 ? "s" : ""}`}.
             </p>
           </div>
           <button onClick={cancelImport}><X size={16} className="text-green-400 hover:text-green-500" /></button>
