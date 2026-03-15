@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { POLE_OPTIONS, type PoleType } from "@/lib/db-types";
-import { ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Check, Download, FileText, Trophy } from "lucide-react";
+import {
+  ChevronRight, ChevronLeft, ChevronDown, ChevronUp,
+  Check, Download, FileText, Trophy, FlaskConical, AlertTriangle,
+} from "lucide-react";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface MemberProfile {
   id: string;
@@ -48,10 +53,36 @@ interface EnrollmentDetail {
   } | null;
 }
 
+interface SimulationRecord {
+  id: string;
+  sector: string;
+  complexity: string;
+  brief_client: string;
+  average_score: number;
+  created_at: string;
+}
+
+interface ScenarioRecord {
+  id: string;
+  sector: string;
+  crisis_type: string;
+  score: number;
+  created_at: string;
+}
+
+interface SimulationSummary {
+  count: number;
+  avgScore: number;
+}
+
 interface MemberDetail {
   profile: MemberProfile;
   enrollments: EnrollmentDetail[];
+  simulations: SimulationRecord[];
+  scenarios: ScenarioRecord[];
 }
+
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const ROLE_LABELS: Record<string, string> = {
   normal: "Membre",
@@ -59,8 +90,27 @@ const ROLE_LABELS: Record<string, string> = {
   presidence: "Présidence",
 };
 
+const CRISIS_LABELS: Record<string, string> = {
+  intervenant_decroche: "Intervenant décroche",
+  scope_creep: "Scope creep",
+  client_mecontent: "Client mécontent",
+  retard_phase: "Retard de phase",
+  conflit_contact: "Conflit avec le contact",
+};
+
+const COMPLEXITY_LABELS: Record<string, string> = {
+  debutant: "Débutant",
+  intermediaire: "Intermédiaire",
+  expert: "Expert",
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 const poleLabel = (pole: PoleType) =>
   POLE_OPTIONS.find((p) => p.value === pole)?.label ?? pole;
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 
 const handleDownload = async (storagePath: string, fileName: string) => {
   const { data } = await supabase.storage.from("formations").createSignedUrl(storagePath, 60);
@@ -72,10 +122,14 @@ const handleDownload = async (storagePath: string, fileName: string) => {
   }
 };
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const SupervisionGlobal = () => {
   const { profile } = useAuth();
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [summaries, setSummaries] = useState<Record<string, EnrollmentSummary[]>>({});
+  const [simSummaries, setSimSummaries] = useState<Record<string, SimulationSummary>>({});
+  const [scenSummaries, setScenSummaries] = useState<Record<string, SimulationSummary>>({});
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<MemberDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -92,6 +146,8 @@ const SupervisionGlobal = () => {
 
   const isPresidence = profile?.role === "presidence";
   const isResponsable = profile?.role === "responsable";
+
+  // ── Chargement liste ────────────────────────────────────────────────────────
 
   useEffect(() => {
     const load = async () => {
@@ -110,17 +166,45 @@ const SupervisionGlobal = () => {
 
       if (loadedMembers.length === 0) { setLoading(false); return; }
 
-      // Load enrollments for all members
       const memberIds = loadedMembers.map((m) => m.id);
-      const { data: enrollments } = await supabase
-        .from("enrollments")
-        .select("id, user_id, formation:formations(id, title)")
-        .in("user_id", memberIds);
 
-      if (!enrollments || enrollments.length === 0) {
-        setLoading(false);
-        return;
+      // Tout en parallèle
+      const [
+        { data: enrollments },
+        { data: simsData },
+        { data: scensData },
+      ] = await Promise.all([
+        supabase.from("enrollments").select("id, user_id, formation:formations(id, title)").in("user_id", memberIds),
+        supabase.from("training_simulations").select("member_id, average_score").in("member_id", memberIds),
+        supabase.from("training_scenario_attempts").select("member_id, score").in("member_id", memberIds),
+      ]);
+
+      // Résumés simulations
+      const simMap: Record<string, SimulationSummary> = {};
+      for (const id of memberIds) {
+        const sims = (simsData ?? []).filter((s: any) => s.member_id === id);
+        if (sims.length > 0) {
+          simMap[id] = {
+            count: sims.length,
+            avgScore: sims.reduce((acc: number, s: any) => acc + Number(s.average_score), 0) / sims.length,
+          };
+        }
       }
+      setSimSummaries(simMap);
+
+      const scenMap: Record<string, SimulationSummary> = {};
+      for (const id of memberIds) {
+        const scens = (scensData ?? []).filter((s: any) => s.member_id === id);
+        if (scens.length > 0) {
+          scenMap[id] = {
+            count: scens.length,
+            avgScore: scens.reduce((acc: number, s: any) => acc + Number(s.score), 0) / scens.length,
+          };
+        }
+      }
+      setScenSummaries(scenMap);
+
+      if (!enrollments || enrollments.length === 0) { setLoading(false); return; }
 
       const enrollmentIds = enrollments.map((e) => e.id);
       const formationIds = [...new Set(
@@ -141,9 +225,7 @@ const SupervisionGlobal = () => {
         const formation = e.formation as any;
         if (!formation) continue;
         const total = (steps ?? []).filter((s: any) => s.formation_id === formation.id).length;
-        const completed = (progressData ?? []).filter(
-          (p: any) => p.enrollment_id === e.id
-        ).length;
+        const completed = (progressData ?? []).filter((p: any) => p.enrollment_id === e.id).length;
         if (!memberSummaries[e.user_id]) memberSummaries[e.user_id] = [];
         memberSummaries[e.user_id].push({
           formationTitle: formation.title,
@@ -151,7 +233,6 @@ const SupervisionGlobal = () => {
           totalSteps: total,
         });
       }
-
       setSummaries(memberSummaries);
       setLoading(false);
     };
@@ -159,81 +240,64 @@ const SupervisionGlobal = () => {
     load();
   }, []);
 
+  // ── Chargement détail membre ─────────────────────────────────────────────────
+
   const handleSelectMember = async (member: MemberProfile) => {
     setLoadingDetail(true);
 
-    const { data: enrollments } = await supabase
-      .from("enrollments")
-      .select("id, formation:formations(id, title)")
-      .eq("user_id", member.id);
+    const [{ data: enrollments }, { data: simsDetail }, { data: scensDetail }] = await Promise.all([
+      supabase.from("enrollments").select("id, formation:formations(id, title)").eq("user_id", member.id),
+      supabase
+        .from("training_simulations")
+        .select("id, sector, complexity, brief_client, average_score, created_at")
+        .eq("member_id", member.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("training_scenario_attempts")
+        .select("id, sector, crisis_type, score, created_at")
+        .eq("member_id", member.id)
+        .order("created_at", { ascending: false }),
+    ]);
+
+    const simulations = (simsDetail as SimulationRecord[]) ?? [];
+    const scenarios = (scensDetail as ScenarioRecord[]) ?? [];
 
     if (!enrollments || enrollments.length === 0) {
-      setSelected({ profile: member, enrollments: [] });
+      setSelected({ profile: member, enrollments: [], simulations, scenarios });
       setLoadingDetail(false);
       return;
     }
 
     const enrollmentIds = enrollments.map((e) => e.id);
-    const formationIds = enrollments
-      .map((e) => (e.formation as any)?.id)
-      .filter(Boolean);
+    const formationIds = enrollments.map((e) => (e.formation as any)?.id).filter(Boolean);
 
     const [{ data: steps }, { data: progressData }, { data: subsData }, { data: quizzesData }] = await Promise.all([
-      supabase
-        .from("steps")
-        .select("id, title, order_index, formation_id")
-        .in("formation_id", formationIds)
-        .order("order_index"),
-      supabase
-        .from("step_progress")
-        .select("step_id, enrollment_id, completed, text_answer")
-        .in("enrollment_id", enrollmentIds),
-      supabase
-        .from("step_submissions")
-        .select("id, step_id, enrollment_id, file_name, storage_path")
-        .in("enrollment_id", enrollmentIds),
-      supabase
-        .from("quizzes")
-        .select("id, formation_id")
-        .in("formation_id", formationIds),
+      supabase.from("steps").select("id, title, order_index, formation_id").in("formation_id", formationIds).order("order_index"),
+      supabase.from("step_progress").select("step_id, enrollment_id, completed, text_answer").in("enrollment_id", enrollmentIds),
+      supabase.from("step_submissions").select("id, step_id, enrollment_id, file_name, storage_path").in("enrollment_id", enrollmentIds),
+      supabase.from("quizzes").select("id, formation_id").in("formation_id", formationIds),
     ]);
 
     const quizIds = (quizzesData ?? []).map((q: any) => q.id);
-
     const [{ data: attemptsData }, { data: questionsData }] = await Promise.all([
       quizIds.length > 0
-        ? supabase
-            .from("quiz_attempts")
-            .select("id, quiz_id, enrollment_id, score, total")
-            .in("quiz_id", quizIds)
-            .in("enrollment_id", enrollmentIds)
+        ? supabase.from("quiz_attempts").select("id, quiz_id, enrollment_id, score, total").in("quiz_id", quizIds).in("enrollment_id", enrollmentIds)
         : Promise.resolve({ data: [] }),
       quizIds.length > 0
-        ? supabase
-            .from("quiz_questions")
-            .select("id, quiz_id, question, order_index, quiz_choices(id, label, is_correct)")
-            .in("quiz_id", quizIds)
-            .order("order_index")
+        ? supabase.from("quiz_questions").select("id, quiz_id, question, order_index, quiz_choices(id, label, is_correct)").in("quiz_id", quizIds).order("order_index")
         : Promise.resolve({ data: [] }),
     ]);
 
     const attemptIds = (attemptsData ?? []).map((a: any) => a.id).filter(Boolean);
     const { data: answersData } = attemptIds.length > 0
-      ? await supabase
-          .from("quiz_answers")
-          .select("attempt_id, question_id, choice_id")
-          .in("attempt_id", attemptIds)
+      ? await supabase.from("quiz_answers").select("attempt_id, question_id, choice_id").in("attempt_id", attemptIds)
       : { data: [] };
 
     const enrollmentDetails: EnrollmentDetail[] = enrollments.map((e) => {
       const formation = e.formation as any;
-      const formationSteps = (steps ?? []).filter(
-        (s: any) => s.formation_id === formation?.id
-      );
+      const formationSteps = (steps ?? []).filter((s: any) => s.formation_id === formation?.id);
       const completedIds = new Set(
-        (progressData ?? [])
-          .filter((p: any) => p.enrollment_id === e.id && p.completed)
-          .map((p: any) => p.step_id)
+        (progressData ?? []).filter((p: any) => p.enrollment_id === e.id && p.completed).map((p: any) => p.step_id)
       );
       const textAnswers: Record<string, string> = {};
       for (const p of (progressData ?? []).filter((p: any) => p.enrollment_id === e.id)) {
@@ -254,24 +318,14 @@ const SupervisionGlobal = () => {
         const attemptAnswers = (answersData ?? []).filter((a: any) => a.attempt_id === attempt.id);
         const answerMap: Record<string, string> = {};
         for (const a of attemptAnswers) answerMap[(a as any).question_id] = (a as any).choice_id;
-
         const formationQuestions = (questionsData ?? [])
           .filter((q: any) => q.quiz_id === formationQuiz?.id)
           .map((q: any) => ({
             question: q.question,
-            choices: (q.quiz_choices ?? []).map((c: any) => ({
-              id: c.id,
-              label: c.label,
-              is_correct: c.is_correct,
-            })),
+            choices: (q.quiz_choices ?? []).map((c: any) => ({ id: c.id, label: c.label, is_correct: c.is_correct })),
             selectedChoiceId: answerMap[q.id] ?? null,
           }));
-
-        quizAttempt = {
-          score: attempt.score,
-          total: attempt.total,
-          questions: formationQuestions,
-        };
+        quizAttempt = { score: attempt.score, total: attempt.total, questions: formationQuestions };
       }
 
       return {
@@ -285,9 +339,11 @@ const SupervisionGlobal = () => {
       };
     });
 
-    setSelected({ profile: member, enrollments: enrollmentDetails });
+    setSelected({ profile: member, enrollments: enrollmentDetails, simulations, scenarios });
     setLoadingDetail(false);
   };
+
+  // ── Accès ────────────────────────────────────────────────────────────────────
 
   if (!isPresidence && !isResponsable) {
     return (
@@ -297,8 +353,12 @@ const SupervisionGlobal = () => {
     );
   }
 
-  /* ── Vue détail membre ── */
+  // ── Vue détail membre ─────────────────────────────────────────────────────────
+
   if (selected) {
+    const hasFormations = selected.enrollments.length > 0;
+    const hasSimulations = selected.simulations.length > 0 || selected.scenarios.length > 0;
+
     return (
       <div className="p-4 md:p-8 max-w-3xl mx-auto">
         <button
@@ -319,31 +379,26 @@ const SupervisionGlobal = () => {
 
         {loadingDetail ? (
           <div className="text-center py-12 text-muted-foreground">Chargement…</div>
-        ) : selected.enrollments.length === 0 ? (
+        ) : !hasFormations && !hasSimulations ? (
           <div className="text-center py-12 text-muted-foreground bg-card border border-border rounded-2xl">
-            <p className="text-sm">Ce membre n'est inscrit à aucune formation.</p>
+            <p className="text-sm">Ce membre n'a aucune activité enregistrée.</p>
           </div>
         ) : (
           <div className="space-y-5">
+
+            {/* ── Formations ── */}
             {selected.enrollments.map((enrollment) => {
               const completed = enrollment.completedStepIds.size;
               const total = enrollment.steps.length;
               return (
                 <div key={enrollment.id} className="bg-card border border-border rounded-2xl p-5">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-foreground text-sm">
-                      {enrollment.formationTitle}
-                    </h3>
-                    <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                      {completed}/{total} étapes
-                    </span>
+                    <h3 className="font-semibold text-foreground text-sm">{enrollment.formationTitle}</h3>
+                    <span className="text-xs text-muted-foreground shrink-0 ml-2">{completed}/{total} étapes</span>
                   </div>
                   {total > 0 && (
                     <div className="w-full bg-muted rounded-full h-1.5 mb-4">
-                      <div
-                        className="bg-foreground rounded-full h-1.5 transition-all"
-                        style={{ width: `${(completed / total) * 100}%` }}
-                      />
+                      <div className="bg-foreground rounded-full h-1.5 transition-all" style={{ width: `${(completed / total) * 100}%` }} />
                     </div>
                   )}
                   {enrollment.quizAttempt && (
@@ -369,25 +424,16 @@ const SupervisionGlobal = () => {
                             const was_correct = selected_choice && correct_choice?.id === selected_choice;
                             return (
                               <div key={qi} className="bg-muted/40 rounded-xl p-3">
-                                <p className="text-xs font-medium text-foreground mb-2">
-                                  {qi + 1}. {q.question}
-                                </p>
+                                <p className="text-xs font-medium text-foreground mb-2">{qi + 1}. {q.question}</p>
                                 <div className="space-y-1">
                                   {q.choices.map((c) => {
                                     const isSelected = c.id === selected_choice;
                                     const isCorrect = c.is_correct;
                                     let cls = "text-muted-foreground";
                                     let dot = "bg-muted";
-                                    if (isSelected && isCorrect) {
-                                      cls = "text-green-700 font-medium";
-                                      dot = "bg-green-500";
-                                    } else if (isSelected && !isCorrect) {
-                                      cls = "text-red-600 font-medium";
-                                      dot = "bg-red-400";
-                                    } else if (!isSelected && isCorrect && !was_correct) {
-                                      cls = "text-gray-500";
-                                      dot = "bg-gray-400";
-                                    }
+                                    if (isSelected && isCorrect) { cls = "text-green-700 font-medium"; dot = "bg-green-500"; }
+                                    else if (isSelected && !isCorrect) { cls = "text-red-600 font-medium"; dot = "bg-red-400"; }
+                                    else if (!isSelected && isCorrect && !was_correct) { cls = "text-gray-500"; dot = "bg-gray-400"; }
                                     return (
                                       <div key={c.id} className="flex items-center gap-2">
                                         <div className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
@@ -415,33 +461,14 @@ const SupervisionGlobal = () => {
                       return (
                         <div key={step.id}>
                           <div className="flex items-center gap-2">
-                            <div
-                              className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                                isDone
-                                  ? "bg-green-500/15 text-green-600 dark:text-green-400"
-                                  : "bg-muted text-muted-foreground"
-                              }`}
-                            >
-                              {isDone ? (
-                                <Check size={11} />
-                              ) : (
-                                <span className="text-[10px] font-bold">
-                                  {step.order_index + 1}
-                                </span>
-                              )}
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${isDone ? "bg-green-500/15 text-green-600 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
+                              {isDone ? <Check size={11} /> : <span className="text-[10px] font-bold">{step.order_index + 1}</span>}
                             </div>
-                            <span
-                              className={`text-sm ${
-                                isDone ? "text-foreground" : "text-muted-foreground"
-                              }`}
-                            >
-                              {step.title}
-                            </span>
+                            <span className={`text-sm ${isDone ? "text-foreground" : "text-muted-foreground"}`}>{step.title}</span>
                           </div>
                           {answer && (
                             <div className="ml-7 mt-1 px-3 py-2 bg-muted/40 rounded-lg text-xs text-muted-foreground">
-                              <span className="font-medium text-foreground">Réponse :</span>{" "}
-                              {answer}
+                              <span className="font-medium text-foreground">Réponse :</span> {answer}
                             </div>
                           )}
                           {enrollment.submissions[step.id]?.length > 0 && (
@@ -466,13 +493,79 @@ const SupervisionGlobal = () => {
                 </div>
               );
             })}
+
+            {/* ── Simulations IA ── */}
+            {hasSimulations && (
+              <div className="bg-card border border-border rounded-2xl p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <FlaskConical size={14} className="text-primary" />
+                  <h3 className="font-semibold text-foreground text-sm">Simulations IA</h3>
+                </div>
+
+                {selected.simulations.length > 0 && (
+                  <div className={selected.scenarios.length > 0 ? "mb-5" : ""}>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">
+                      Études blanches
+                    </p>
+                    <div className="space-y-2">
+                      {selected.simulations.map((sim) => (
+                        <div key={sim.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-muted/30">
+                          <div className="min-w-0 mr-3">
+                            <p className="text-xs font-medium text-foreground truncate">{sim.brief_client}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {sim.sector} · {COMPLEXITY_LABELS[sim.complexity] ?? sim.complexity}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-bold text-foreground">
+                              {Number(sim.average_score).toFixed(1)}
+                              <span className="text-xs font-normal text-muted-foreground">/10</span>
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">{formatDate(sim.created_at)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selected.scenarios.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2.5">
+                      Scénarios critiques
+                    </p>
+                    <div className="space-y-2">
+                      {selected.scenarios.map((scen) => (
+                        <div key={scen.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-muted/30">
+                          <div className="min-w-0 mr-3">
+                            <p className="text-xs font-medium text-foreground">
+                              {CRISIS_LABELS[scen.crisis_type] ?? scen.crisis_type}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{scen.sector}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-bold text-foreground">
+                              {Number(scen.score).toFixed(1)}
+                              <span className="text-xs font-normal text-muted-foreground">/10</span>
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">{formatDate(scen.created_at)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         )}
       </div>
     );
   }
 
-  /* ── Vue liste membres ── */
+  // ── Vue liste membres ─────────────────────────────────────────────────────────
+
   return (
     <div className="px-4 py-6 md:px-8 md:py-8">
       <div className="mb-6">
@@ -494,6 +587,10 @@ const SupervisionGlobal = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {members.map((member) => {
             const memberSummaries = summaries[member.id] ?? [];
+            const simSummary = simSummaries[member.id];
+            const scenSummary = scenSummaries[member.id];
+            const hasSimActivity = simSummary || scenSummary;
+
             return (
               <div
                 key={member.id}
@@ -503,33 +600,23 @@ const SupervisionGlobal = () => {
                 <div>
                   <p className="font-semibold text-foreground text-sm">{member.full_name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {poleLabel(member.pole)} ·{" "}
-                    {ROLE_LABELS[member.role] ?? member.role}
+                    {poleLabel(member.pole)} · {ROLE_LABELS[member.role] ?? member.role}
                   </p>
                 </div>
 
+                {/* Formations */}
                 {memberSummaries.length > 0 ? (
                   <div className="flex flex-col gap-2">
                     {memberSummaries.map((s, i) => (
                       <div key={i}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs text-muted-foreground truncate mr-2">
-                            {s.formationTitle}
-                          </span>
-                          <span className="text-xs text-muted-foreground shrink-0">
-                            {s.completedSteps}/{s.totalSteps}
-                          </span>
+                          <span className="text-xs text-muted-foreground truncate mr-2">{s.formationTitle}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">{s.completedSteps}/{s.totalSteps}</span>
                         </div>
                         <div className="w-full bg-muted rounded-full h-1">
                           <div
                             className="bg-foreground rounded-full h-1 transition-all"
-                            style={{
-                              width: `${
-                                s.totalSteps > 0
-                                  ? (s.completedSteps / s.totalSteps) * 100
-                                  : 0
-                              }%`,
-                            }}
+                            style={{ width: `${s.totalSteps > 0 ? (s.completedSteps / s.totalSteps) * 100 : 0}%` }}
                           />
                         </div>
                       </div>
@@ -537,6 +624,24 @@ const SupervisionGlobal = () => {
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">Aucune formation suivie</p>
+                )}
+
+                {/* Simulations IA */}
+                {hasSimActivity && (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2 border-t border-border">
+                    {simSummary && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <FlaskConical size={11} className="shrink-0" />
+                        {simSummary.count} étude{simSummary.count > 1 ? "s" : ""} · {simSummary.avgScore.toFixed(1)}/10
+                      </span>
+                    )}
+                    {scenSummary && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <AlertTriangle size={11} className="shrink-0" />
+                        {scenSummary.count} scénario{scenSummary.count > 1 ? "s" : ""} · {scenSummary.avgScore.toFixed(1)}/10
+                      </span>
+                    )}
+                  </div>
                 )}
 
                 <div className="mt-auto flex justify-end">

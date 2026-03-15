@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Loader2, AlertTriangle, RotateCcw } from "lucide-react";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +32,7 @@ const CRISIS_LABELS: Record<CrisisType, string> = {
 type Step = "setup" | "selecting" | "scenario" | "responding" | "done";
 
 export default function ScenarioFlow() {
+  const { profile } = useAuth();
   const [step, setStep] = useState<Step>("setup");
   const [sector, setSector] = useState("Numérique & IT");
   const [selectedCrisis, setSelectedCrisis] = useState<CrisisType | null>(null);
@@ -101,6 +104,16 @@ export default function ScenarioFlow() {
       const data = await res.json();
       setEvaluation(data);
       setStep("done");
+      // Sauvegarde en BDD
+      if (profile && brief && selectedCrisis) {
+        supabase.from("training_scenario_attempts").insert({
+          member_id: profile.id,
+          sector: brief.secteur,
+          crisis_type: selectedCrisis,
+          score: data.note,
+          evaluation: data,
+        });
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'évaluation");
     } finally {

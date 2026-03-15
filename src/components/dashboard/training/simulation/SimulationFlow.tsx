@@ -2,6 +2,8 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, AlertTriangle, Users, FlaskConical } from "lucide-react";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -42,6 +44,7 @@ const PHASE_LABELS: Record<PhaseNumber, string> = {
 type FlowState = "setup" | "generating" | "ready" | "phase" | "evaluating" | "summary";
 
 export default function SimulationFlow() {
+  const { profile } = useAuth();
   const { session, updateSession, clearSession } = useTrainingSession();
   const [flowState, setFlowState] = useState<FlowState>(
     session.brief ? (session.currentPhase === "summary" ? "summary" : "phase") : "setup"
@@ -171,6 +174,19 @@ export default function SimulationFlow() {
       updateSession({ currentPhase: (current + 1) as PhaseNumber });
       setFlowState("phase");
     } else {
+      // Sauvegarde en BDD avant d'afficher le résumé
+      if (profile && session.brief) {
+        const phases: PhaseNumber[] = [1, 2, 3, 4, 5];
+        const avg = phases.reduce((s, p) => s + (session.evaluations[p]?.note ?? 0), 0) / 5;
+        supabase.from("training_simulations").insert({
+          member_id: profile.id,
+          sector: session.brief.secteur,
+          complexity: session.brief.complexite,
+          brief_client: session.brief.client,
+          evaluations: session.evaluations,
+          average_score: Math.round(avg * 100) / 100,
+        });
+      }
       updateSession({ currentPhase: "summary" });
       setFlowState("summary");
     }
