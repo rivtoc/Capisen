@@ -99,7 +99,7 @@ const DashboardContent = () => {
       return <FormationsPole pole={pole} />;
     }
 
-    if (activeView.startsWith("mails/") && !canAccess(profile, "mails")) {
+    if (activeView.startsWith("mails/") && activeView !== "mails/offres" && !canAccess(profile, "mails")) {
       return <AccessDenied />;
     }
 

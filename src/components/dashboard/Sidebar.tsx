@@ -127,8 +127,16 @@ const Sidebar = ({
         { key: "mails/compose",   label: "Rédaction IA", icon: <Wand2 size={14} /> },
         { key: "mails/contacts",  label: "Contacts",     icon: <Users size={14} /> },
         { key: "mails/templates", label: "Templates",    icon: <FileText size={14} /> },
-        { key: "mails/offres",    label: "Offres",       icon: <Package size={14} /> },
         { key: "mails/history",   label: "Historique",   icon: <History size={14} /> },
+      ],
+    },
+    {
+      key: "junior",
+      label: "Ma Junior",
+      icon: <Building2 size={16} />,
+      hidden: isNouveauMembre || isIntervenant,
+      children: [
+        { key: "mails/offres", label: "Offres", icon: <Package size={14} /> },
       ],
     },
     {

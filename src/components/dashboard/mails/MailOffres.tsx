@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Pencil, Trash2, X, Loader2, ChevronDown, ChevronRight } from "lucide-react";
 
 interface Prestation {
@@ -19,6 +20,8 @@ interface Offre {
 type FormMode = { type: "offre"; editId: string | null } | { type: "prestation"; editId: string | null; offreId: string };
 
 const MailOffres = () => {
+  const { profile } = useAuth();
+  const canEdit = profile?.role === "presidence";
   const [offres, setOffres] = useState<Offre[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -201,17 +204,19 @@ const MailOffres = () => {
             Gérez le catalogue des services proposés par Capisen.
           </p>
         </div>
-        <button
-          onClick={openAddOffre}
-          className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
-        >
-          <Plus size={16} />
-          Nouvelle offre
-        </button>
+        {canEdit && (
+          <button
+            onClick={openAddOffre}
+            className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors"
+          >
+            <Plus size={16} />
+            Nouvelle offre
+          </button>
+        )}
       </div>
 
       {/* Formulaire nouvelle offre (global) */}
-      {form?.type === "offre" && form.editId === null && (
+      {canEdit && form?.type === "offre" && form.editId === null && (
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-foreground">Nouvelle offre</h3>
@@ -257,20 +262,22 @@ const MailOffres = () => {
                     </span>
                   </button>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => openEditOffre(o)}
-                      className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteOffre(o.id)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                  {canEdit && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => openEditOffre(o)}
+                        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteOffre(o.id)}
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Formulaire modification offre */}
@@ -294,20 +301,22 @@ const MailOffres = () => {
                                   <p className="text-xs text-muted-foreground mt-0.5">{p.description}</p>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <button
-                                  onClick={() => openEditPrestation(p)}
-                                  className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                  <Pencil size={13} />
-                                </button>
-                                <button
-                                  onClick={() => handleDeletePrestation(p.id, o.id)}
-                                  className="p-1 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                              </div>
+                              {canEdit && (
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button
+                                    onClick={() => openEditPrestation(p)}
+                                    className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                                  >
+                                    <Pencil size={13} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeletePrestation(p.id, o.id)}
+                                    className="p-1 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              )}
                             </div>
                             {/* Formulaire modification prestation */}
                             {isFormEditingPrestation(p.id) && (
@@ -321,7 +330,7 @@ const MailOffres = () => {
                     )}
 
                     {/* Formulaire nouvelle prestation */}
-                    {isFormAddingPrestationFor(o.id) ? (
+                    {canEdit && (isFormAddingPrestationFor(o.id) ? (
                       <div className="pl-4">
                         <FormBlock onCancel={() => setForm(null)} />
                       </div>
@@ -333,7 +342,7 @@ const MailOffres = () => {
                         <Plus size={13} />
                         Ajouter une prestation
                       </button>
-                    )}
+                    ))}
                   </div>
                 )}
               </div>
