@@ -58,7 +58,8 @@ interface SimulationRecord {
   sector: string;
   complexity: string;
   brief_client: string;
-  average_score: number;
+  average_score: number | null;
+  status: string;
   created_at: string;
 }
 
@@ -249,7 +250,7 @@ const SupervisionGlobal = () => {
       supabase.from("enrollments").select("id, formation:formations(id, title)").eq("user_id", member.id),
       supabase
         .from("training_simulations")
-        .select("id, sector, complexity, brief_client, average_score, created_at")
+        .select("id, sector, complexity, brief_client, average_score, status, created_at")
         .eq("member_id", member.id)
         .order("created_at", { ascending: false }),
       supabase
@@ -517,10 +518,16 @@ const SupervisionGlobal = () => {
                             </p>
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="text-sm font-bold text-foreground">
-                              {Number(sim.average_score).toFixed(1)}
-                              <span className="text-xs font-normal text-muted-foreground">/10</span>
-                            </p>
+                            {sim.status === "in_progress" ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-semibold text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-500/10 dark:border-blue-500/30">
+                                En cours
+                              </span>
+                            ) : (
+                              <p className="text-sm font-bold text-foreground">
+                                {sim.average_score !== null ? Number(sim.average_score).toFixed(1) : "—"}
+                                <span className="text-xs font-normal text-muted-foreground">/10</span>
+                              </p>
+                            )}
                             <p className="text-[10px] text-muted-foreground">{formatDate(sim.created_at)}</p>
                           </div>
                         </div>

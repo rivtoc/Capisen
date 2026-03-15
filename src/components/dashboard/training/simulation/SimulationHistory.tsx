@@ -27,6 +27,7 @@ interface SimRow {
   brief_client: string | null;
   evaluations: Partial<Record<PhaseNumber, PhaseEvaluation>>;
   average_score: number | null;
+  status: string;
   started_at: string;
   completed_at: string | null;
 }
@@ -56,10 +57,9 @@ export default function SimulationHistory() {
     if (!profile) return;
     supabase
       .from("training_simulations")
-      .select("id, sector, complexity, brief_client, evaluations, average_score, started_at, completed_at")
+      .select("id, sector, complexity, brief_client, evaluations, average_score, status, started_at, completed_at")
       .eq("member_id", profile.id)
-      .eq("status", "completed")
-      .order("completed_at", { ascending: false })
+      .order("updated_at", { ascending: false })
       .then(({ data }) => {
         setSimulations((data ?? []) as SimRow[]);
         setLoading(false);
@@ -81,7 +81,7 @@ export default function SimulationHistory() {
       <div>
         <h2 className="text-base font-semibold text-foreground">Historique</h2>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Toutes vos études blanches terminées
+          Toutes vos études blanches (en cours et terminées)
         </p>
       </div>
 
@@ -126,7 +126,13 @@ export default function SimulationHistory() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 ml-3">
-                    {sim.average_score !== null && <ScoreChip score={sim.average_score} />}
+                    {sim.status === "in_progress" ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-semibold text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-500/10 dark:border-blue-500/30">
+                        En cours
+                      </span>
+                    ) : sim.average_score !== null ? (
+                      <ScoreChip score={sim.average_score} />
+                    ) : null}
                     {isOpen ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
                   </div>
                 </button>
