@@ -60,7 +60,7 @@ interface SimulationRecord {
   brief_client: string;
   average_score: number | null;
   status: string;
-  created_at: string;
+  started_at: string;
 }
 
 interface ScenarioRecord {
@@ -250,9 +250,9 @@ const SupervisionGlobal = () => {
       supabase.from("enrollments").select("id, formation:formations(id, title)").eq("user_id", member.id),
       supabase
         .from("training_simulations")
-        .select("id, sector, complexity, brief_client, average_score, status, created_at")
+        .select("id, sector, complexity, brief_client, average_score, status, started_at")
         .eq("member_id", member.id)
-        .order("created_at", { ascending: false }),
+        .order("started_at", { ascending: false }),
       supabase
         .from("training_scenario_attempts")
         .select("id, sector, crisis_type, score, created_at")
@@ -528,7 +528,7 @@ const SupervisionGlobal = () => {
                                 <span className="text-xs font-normal text-muted-foreground">/10</span>
                               </p>
                             )}
-                            <p className="text-[10px] text-muted-foreground">{formatDate(sim.created_at)}</p>
+                            <p className="text-[10px] text-muted-foreground">{formatDate(sim.started_at)}</p>
                           </div>
                         </div>
                       ))}
