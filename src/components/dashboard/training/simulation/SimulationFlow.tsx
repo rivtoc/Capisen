@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, AlertTriangle, Users, FlaskConical } from "lucide-react";
 import { CustomSelect } from "@/components/ui/CustomSelect";
@@ -58,6 +58,41 @@ export default function SimulationFlow() {
   const [loadingBrief, setLoadingBrief] = useState(false);
   const [loadingEval, setLoadingEval] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewingPhase, setViewingPhase] = useState<PhaseNumber | null>(null);
+
+  // Load in-progress simulation from DB on mount (if no brief in local session)
+  useEffect(() => {
+    if (session.brief) return; // already have local session
+    if (!profile) return;
+    supabase
+      .from("training_simulations")
+      .select("*")
+      .eq("member_id", profile.id)
+      .eq("status", "in_progress")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        updateSession({
+          simulationId: data.id,
+          brief: data.brief,
+          currentPhase: Math.min(data.current_phase, 5) as PhaseNumber,
+          responses: data.responses ?? {},
+          evaluations: data.evaluations ?? {},
+          mode: "simulation",
+          clientMode: "ai",
+          multiplayerSessionId: null,
+          memberClientName: null,
+          chatHistory: [],
+          scenario: null,
+          scenarioResponse: null,
+          scenarioEvaluation: null,
+          startedAt: data.started_at,
+        });
+        setFlowState("phase");
+      });
+  }, [profile?.id]);
 
   // Multiplayer polling (member mode, phase 2)
   const isMultiplayerPhase2 =
@@ -102,7 +137,31 @@ export default function SimulationFlow() {
         }
       }
 
+      // Create DB record
+      let simulationId: string | null = null;
+      if (profile) {
+        const { data: dbData } = await supabase
+          .from("training_simulations")
+          .insert({
+            member_id: profile.id,
+            sector: brief.secteur,
+            complexity: brief.complexite,
+            brief_client: brief.client,
+            brief,
+            current_phase: 1,
+            responses: {},
+            evaluations: {},
+            status: "in_progress",
+            started_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select("id")
+          .single();
+        simulationId = dbData?.id ?? null;
+      }
+
       updateSession({
+        simulationId,
         mode: "simulation",
         clientMode,
         brief,
@@ -159,6 +218,15 @@ export default function SimulationFlow() {
       const newResponses = { ...session.responses, [phase]: response };
       updateSession({ evaluations: newEvaluations, responses: newResponses });
       setPendingEvaluation(evaluation);
+
+      // Background DB sync
+      if (session.simulationId) {
+        supabase.from("training_simulations").update({
+          responses: newResponses,
+          evaluations: newEvaluations,
+          updated_at: new Date().toISOString(),
+        }).eq("id", session.simulationId);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'évaluation");
       setFlowState("phase");
@@ -169,24 +237,35 @@ export default function SimulationFlow() {
 
   const handleNextPhase = () => {
     setPendingEvaluation(null);
+    setViewingPhase(null);
     const current = session.currentPhase as PhaseNumber;
     if (current < 5) {
       updateSession({ currentPhase: (current + 1) as PhaseNumber });
       setFlowState("phase");
-    } else {
-      // Sauvegarde en BDD avant d'afficher le résumé
-      if (profile && session.brief) {
-        const phases: PhaseNumber[] = [1, 2, 3, 4, 5];
-        const avg = phases.reduce((s, p) => s + (session.evaluations[p]?.note ?? 0), 0) / 5;
-        supabase.from("training_simulations").insert({
-          member_id: profile.id,
-          sector: session.brief.secteur,
-          complexity: session.brief.complexite,
-          brief_client: session.brief.client,
-          evaluations: session.evaluations,
-          average_score: Math.round(avg * 100) / 100,
-        });
+
+      // Background DB sync
+      if (session.simulationId) {
+        supabase.from("training_simulations").update({
+          current_phase: current + 1,
+          updated_at: new Date().toISOString(),
+        }).eq("id", session.simulationId);
       }
+    } else {
+      const phases: PhaseNumber[] = [1, 2, 3, 4, 5];
+      const avg = phases.reduce((s, p) => s + (session.evaluations[p]?.note ?? 0), 0) / 5;
+
+      // Background DB sync — mark as completed
+      if (session.simulationId) {
+        supabase.from("training_simulations").update({
+          status: "completed",
+          current_phase: 6,
+          average_score: Math.round(avg * 100) / 100,
+          evaluations: session.evaluations,
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }).eq("id", session.simulationId);
+      }
+
       updateSession({ currentPhase: "summary" });
       setFlowState("summary");
     }
@@ -200,6 +279,7 @@ export default function SimulationFlow() {
     clearSession();
     setFlowState("setup");
     setPendingEvaluation(null);
+    setViewingPhase(null);
     setError(null);
   };
 
@@ -227,6 +307,10 @@ export default function SimulationFlow() {
         <PhaseProgressBar
           currentPhase={session.currentPhase === "summary" ? 5 : (session.currentPhase as PhaseNumber)}
           completedPhases={completedPhases}
+          onPhaseClick={(phase) => {
+            setViewingPhase(phase);
+            setFlowState("phase");
+          }}
         />
       )}
 
@@ -367,7 +451,33 @@ export default function SimulationFlow() {
                 onNext={handleNextPhase}
                 nextLabel={session.currentPhase === 5 ? "Voir le bilan →" : "Phase suivante →"}
               />
+            ) : viewingPhase !== null ? (
+              // Review mode: show past phase evaluation read-only
+              <div className="space-y-4">
+                <div className="rounded-xl border border-border bg-muted/30 px-4 py-2 flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    Consultation — Phase {viewingPhase} : {PHASE_LABELS[viewingPhase]}
+                  </p>
+                  <button
+                    onClick={() => setViewingPhase(null)}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    ← Revenir à la phase actuelle
+                  </button>
+                </div>
+                {session.evaluations[viewingPhase] ? (
+                  <PhaseEvaluationCard
+                    evaluation={session.evaluations[viewingPhase]!}
+                    phaseLabel={PHASE_LABELS[viewingPhase]}
+                    onNext={() => setViewingPhase(null)}
+                    nextLabel="← Revenir à la phase actuelle"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">Aucune évaluation disponible.</p>
+                )}
+              </div>
             ) : (
+              // Normal phase rendering
               <>
                 {session.currentPhase === 1 && (
                   <Phase1Prise brief={session.brief} onSubmit={submitPhaseResponse} loading={loadingEval} />

@@ -12,9 +12,10 @@ const PHASES: { number: PhaseNumber; label: string; short: string }[] = [
 interface Props {
   currentPhase: PhaseNumber | "summary";
   completedPhases: PhaseNumber[];
+  onPhaseClick?: (phase: PhaseNumber) => void;
 }
 
-export default function PhaseProgressBar({ currentPhase, completedPhases }: Props) {
+export default function PhaseProgressBar({ currentPhase, completedPhases, onPhaseClick }: Props) {
   return (
     <div className="flex items-center gap-0 w-full">
       {PHASES.map((phase, idx) => {
@@ -24,19 +25,28 @@ export default function PhaseProgressBar({ currentPhase, completedPhases }: Prop
         const isPast =
           isDone || (currentPhase !== "summary" && phase.number < currentPhase);
 
+        const circleClassName = `
+          w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-colors
+          ${isDone ? "bg-green-500 text-white" : ""}
+          ${isActive && !isDone ? "bg-primary text-primary-foreground ring-2 ring-primary/30" : ""}
+          ${!isActive && !isDone ? "bg-muted text-muted-foreground" : ""}
+        `;
+
         return (
           <div key={phase.number} className="flex items-center flex-1 min-w-0">
             <div className="flex flex-col items-center flex-1 min-w-0">
-              <div
-                className={`
-                  w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-colors
-                  ${isDone ? "bg-green-500 text-white" : ""}
-                  ${isActive && !isDone ? "bg-primary text-primary-foreground ring-2 ring-primary/30" : ""}
-                  ${!isActive && !isDone ? "bg-muted text-muted-foreground" : ""}
-                `}
-              >
-                {isDone ? <Check size={13} /> : phase.number}
-              </div>
+              {isDone && onPhaseClick ? (
+                <button
+                  onClick={() => onPhaseClick(phase.number)}
+                  className={`${circleClassName} cursor-pointer hover:opacity-80 transition-opacity`}
+                >
+                  {<Check size={13} />}
+                </button>
+              ) : (
+                <div className={circleClassName}>
+                  {isDone ? <Check size={13} /> : phase.number}
+                </div>
+              )}
               <span
                 className={`
                   hidden sm:block text-[10px] mt-1 text-center truncate max-w-[56px]

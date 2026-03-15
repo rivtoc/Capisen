@@ -44,6 +44,7 @@ export interface ChatMessage {
 }
 
 export interface TrainingSession {
+  simulationId: string | null;
   mode: SimulationMode | null;
   clientMode: ClientMode;
   multiplayerSessionId: string | null;

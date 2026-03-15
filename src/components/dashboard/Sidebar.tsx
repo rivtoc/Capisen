@@ -162,6 +162,7 @@ const Sidebar = ({
       children: [
         { key: "training/simulation", label: "Étude blanche",     icon: <FlaskConical size={14} /> },
         { key: "training/scenario",   label: "Scénario critique", icon: <AlertTriangle size={14} /> },
+        { key: "training/history",    label: "Historique",        icon: <History size={14} /> },
       ],
     },
     {

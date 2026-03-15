@@ -139,6 +139,7 @@ const DashboardContent = () => {
       case "tresorerie/gestion":    return <TresorerieGestion />;
       case "training/simulation":   return <TrainingHub initialMode="simulation" />;
       case "training/scenario":     return <TrainingHub initialMode="scenario" />;
+      case "training/history":      return <TrainingHub initialMode="history" />;
       case "settings/membres":      return <SettingsPage defaultTab="membres" />;
       case "settings/profil":       return <SettingsPage defaultTab="profil" />;
       case "settings/securite":     return <SettingsPage defaultTab="securite" />;
