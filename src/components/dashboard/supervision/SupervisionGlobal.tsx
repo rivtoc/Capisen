@@ -53,6 +53,13 @@ interface EnrollmentDetail {
   } | null;
 }
 
+interface PhaseEval {
+  note: number;
+  verdict: string;
+  point_fort: string;
+  a_ameliorer: string;
+}
+
 interface SimulationRecord {
   id: string;
   sector: string;
@@ -61,6 +68,7 @@ interface SimulationRecord {
   average_score: number | null;
   status: string;
   started_at: string;
+  evaluations: Partial<Record<string, PhaseEval>> | null;
 }
 
 interface ScenarioRecord {
@@ -105,6 +113,14 @@ const COMPLEXITY_LABELS: Record<string, string> = {
   expert: "Expert",
 };
 
+const PHASE_LABELS: Record<number, string> = {
+  1: "Prise de contact",
+  2: "Kickoff",
+  3: "Suivi",
+  4: "Livraison",
+  5: "Clôture",
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const poleLabel = (pole: PoleType) =>
@@ -135,6 +151,7 @@ const SupervisionGlobal = () => {
   const [selected, setSelected] = useState<MemberDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [expandedQuizIds, setExpandedQuizIds] = useState<Set<string>>(new Set());
+  const [expandedSimIds, setExpandedSimIds] = useState<Set<string>>(new Set());
 
   const toggleQuizDetail = (enrollmentId: string) => {
     setExpandedQuizIds((prev) => {
@@ -250,7 +267,7 @@ const SupervisionGlobal = () => {
       supabase.from("enrollments").select("id, formation:formations(id, title)").eq("user_id", member.id),
       supabase
         .from("training_simulations")
-        .select("id, sector, complexity, brief_client, average_score, status, started_at")
+        .select("id, sector, complexity, brief_client, average_score, status, started_at, evaluations")
         .eq("member_id", member.id)
         .order("started_at", { ascending: false }),
       supabase
@@ -509,29 +526,61 @@ const SupervisionGlobal = () => {
                       Études blanches
                     </p>
                     <div className="space-y-2">
-                      {selected.simulations.map((sim) => (
-                        <div key={sim.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-muted/30">
-                          <div className="min-w-0 mr-3">
-                            <p className="text-xs font-medium text-foreground truncate">{sim.brief_client}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {sim.sector} · {COMPLEXITY_LABELS[sim.complexity] ?? sim.complexity}
-                            </p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            {sim.status === "in_progress" ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-semibold text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-500/10 dark:border-blue-500/30">
-                                En cours
-                              </span>
-                            ) : (
-                              <p className="text-sm font-bold text-foreground">
-                                {sim.average_score !== null ? Number(sim.average_score).toFixed(1) : "—"}
-                                <span className="text-xs font-normal text-muted-foreground">/10</span>
-                              </p>
+                      {selected.simulations.map((sim) => {
+                        const isSimOpen = expandedSimIds.has(sim.id);
+                        const hasEvals = sim.evaluations && Object.keys(sim.evaluations).length > 0;
+                        return (
+                          <div key={sim.id} className="rounded-xl bg-muted/30 overflow-hidden">
+                            <button
+                              onClick={() => setExpandedSimIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(sim.id)) next.delete(sim.id); else next.add(sim.id);
+                                return next;
+                              })}
+                              className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="min-w-0 mr-3">
+                                <p className="text-xs font-medium text-foreground truncate">{sim.brief_client}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {sim.sector} · {COMPLEXITY_LABELS[sim.complexity] ?? sim.complexity}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {sim.status === "in_progress" ? (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-semibold text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-500/10 dark:border-blue-500/30">
+                                    En cours
+                                  </span>
+                                ) : (
+                                  <span className="text-sm font-bold text-foreground">
+                                    {sim.average_score !== null ? Number(sim.average_score).toFixed(1) : "—"}
+                                    <span className="text-xs font-normal text-muted-foreground">/10</span>
+                                  </span>
+                                )}
+                                {hasEvals && (isSimOpen
+                                  ? <ChevronUp size={12} className="text-muted-foreground" />
+                                  : <ChevronDown size={12} className="text-muted-foreground" />
+                                )}
+                              </div>
+                            </button>
+                            {isSimOpen && hasEvals && (
+                              <div className="px-3 pb-3 border-t border-border/40 space-y-1 pt-2">
+                                <p className="text-[10px] text-muted-foreground mb-1.5">{formatDate(sim.started_at)}</p>
+                                {[1, 2, 3, 4, 5].map((p) => {
+                                  const ev = sim.evaluations?.[String(p)];
+                                  if (!ev) return null;
+                                  const color = ev.note >= 8 ? "text-green-600 dark:text-green-400" : ev.note >= 6 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+                                  return (
+                                    <div key={p} className="flex items-center justify-between text-xs">
+                                      <span className="text-muted-foreground">Ph. {p} — {PHASE_LABELS[p]}</span>
+                                      <span className={`font-semibold ${color}`}>{ev.note}/10</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             )}
-                            <p className="text-[10px] text-muted-foreground">{formatDate(sim.started_at)}</p>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

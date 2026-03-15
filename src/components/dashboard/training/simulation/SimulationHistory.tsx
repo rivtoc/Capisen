@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronDown, ChevronUp, Trophy, Clock, FlaskConical } from "lucide-react";
+import { ChevronDown, ChevronUp, Trophy, Clock, FlaskConical, Play, BookOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import AnimatedScoreBar from "./AnimatedScoreBar";
@@ -20,11 +20,14 @@ const COMPLEXITY_LABELS: Record<string, string> = {
   expert: "Expert",
 };
 
-interface SimRow {
+export interface SimRow {
   id: string;
   sector: string;
   complexity: string;
   brief_client: string | null;
+  brief: any | null;
+  responses: any | null;
+  current_phase: number;
   evaluations: Partial<Record<PhaseNumber, PhaseEvaluation>>;
   average_score: number | null;
   status: string;
@@ -47,7 +50,11 @@ function ScoreChip({ score }: { score: number }) {
   );
 }
 
-export default function SimulationHistory() {
+interface Props {
+  onResume?: (sim: SimRow) => void;
+}
+
+export default function SimulationHistory({ onResume }: Props) {
   const { profile } = useAuth();
   const [simulations, setSimulations] = useState<SimRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +64,7 @@ export default function SimulationHistory() {
     if (!profile) return;
     supabase
       .from("training_simulations")
-      .select("id, sector, complexity, brief_client, evaluations, average_score, status, started_at, completed_at")
+      .select("id, sector, complexity, brief_client, brief, responses, current_phase, evaluations, average_score, status, started_at, completed_at")
       .eq("member_id", profile.id)
       .order("updated_at", { ascending: false })
       .then(({ data }) => {
@@ -177,6 +184,19 @@ export default function SimulationHistory() {
                         );
                       })}
                     </div>
+
+                    {/* Resume / review button */}
+                    {onResume && sim.brief && (
+                      <button
+                        onClick={() => onResume(sim)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-primary/30 bg-primary/5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        {sim.status === "in_progress"
+                          ? <><Play size={12} /> Reprendre cette simulation</>
+                          : <><BookOpen size={12} /> Revoir cette simulation</>
+                        }
+                      </button>
+                    )}
                   </div>
                 )}
               </motion.div>
