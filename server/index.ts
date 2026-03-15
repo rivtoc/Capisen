@@ -4,6 +4,9 @@ import { Resend } from 'resend';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import OpenAI from 'openai';
+import { registerTrainingRoutes } from '../api/training.js';
+import type { MultiplayerSession } from '../src/lib/training-types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -25,6 +28,12 @@ app.use(express.json());
 
 // Initialize Resend
 const resend = new Resend(apiKey);
+
+// Initialize OpenAI + training routes
+const openaiKey = (process.env.OPENAI_API_KEY || '').trim();
+const openai = new OpenAI({ apiKey: openaiKey });
+const trainingSessions = new Map<string, MultiplayerSession>();
+registerTrainingRoutes(app, openai, trainingSessions);
 
 // Email endpoint
 app.post('/api/contact', async (req, res) => {

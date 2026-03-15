@@ -14,6 +14,7 @@ import Portail from "./pages/Portail";
 import Setup from "./pages/Setup";
 import ClientPortal from "./pages/ClientPortal";
 import NotFound from "./pages/NotFound";
+import TrainingClient from "./pages/TrainingClient";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
                 </ClientRoute>
               }
             />
+            <Route path="/training/client" element={<TrainingClient />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

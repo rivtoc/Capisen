@@ -5,7 +5,7 @@ import {
   Lock, Wand2, Users, FileText, Package, History,
   BarChart3, FolderOpen, FilePlus, Building2, X, LogOut,
   Sun, Moon, LayoutTemplate, Briefcase, UserPlus, List, ClipboardList,
-  Wallet, ReceiptText, Settings2, Scale,
+  Wallet, ReceiptText, Settings2, Scale, FlaskConical, AlertTriangle,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import type { UserProfile } from "@/contexts/AuthContext";
@@ -152,6 +152,16 @@ const Sidebar = ({
         { key: "clients/liste",   label: "Liste clients",    icon: <List size={14} /> },
         { key: "clients/inviter", label: "Inviter un client", icon: <UserPlus size={14} /> },
         { key: "clients/projets", label: "Projets",           icon: <FolderOpen size={14} /> },
+      ],
+    },
+    {
+      key: "training",
+      label: "Simulations",
+      icon: <FlaskConical size={16} />,
+      hidden: isNouveauMembre || isIntervenant,
+      children: [
+        { key: "training/simulation", label: "Étude blanche",     icon: <FlaskConical size={14} /> },
+        { key: "training/scenario",   label: "Scénario critique", icon: <AlertTriangle size={14} /> },
       ],
     },
     {

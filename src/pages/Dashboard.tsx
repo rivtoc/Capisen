@@ -26,6 +26,7 @@ import ClientsProjets from "@/components/dashboard/clients/ClientsProjets";
 import NoteDeFrais from "@/components/dashboard/tresorerie/NoteDeFrais";
 import TresorerieGestion from "@/components/dashboard/tresorerie/TresorerieGestion";
 import TresorerieVote from "@/components/dashboard/tresorerie/TresorerieVote";
+import TrainingHub from "@/components/dashboard/training/TrainingHub";
 import type { PoleType } from "@/lib/db-types";
 import { canAccess } from "@/lib/permissions";
 
@@ -136,6 +137,8 @@ const DashboardContent = () => {
       case "tresorerie/notes":      return <NoteDeFrais />;
       case "tresorerie/vote":       return <TresorerieVote />;
       case "tresorerie/gestion":    return <TresorerieGestion />;
+      case "training/simulation":   return <TrainingHub initialMode="simulation" />;
+      case "training/scenario":     return <TrainingHub initialMode="scenario" />;
       case "settings/membres":      return <SettingsPage defaultTab="membres" />;
       case "settings/profil":       return <SettingsPage defaultTab="profil" />;
       case "settings/securite":     return <SettingsPage defaultTab="securite" />;
