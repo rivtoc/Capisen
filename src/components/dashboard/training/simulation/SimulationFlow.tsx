@@ -226,7 +226,7 @@ export default function SimulationFlow() {
           responses: newResponses,
           evaluations: newEvaluations,
           updated_at: new Date().toISOString(),
-        }).eq("id", session.simulationId);
+        }).eq("id", session.simulationId).then(() => {});
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erreur lors de l'évaluation");
@@ -249,7 +249,7 @@ export default function SimulationFlow() {
         supabase.from("training_simulations").update({
           current_phase: current + 1,
           updated_at: new Date().toISOString(),
-        }).eq("id", session.simulationId);
+        }).eq("id", session.simulationId).then(() => {});
       }
     } else {
       const phases: PhaseNumber[] = [1, 2, 3, 4, 5];
@@ -264,7 +264,7 @@ export default function SimulationFlow() {
           evaluations: session.evaluations,
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        }).eq("id", session.simulationId);
+        }).eq("id", session.simulationId).then(() => {});
       }
 
       updateSession({ currentPhase: "summary" });
