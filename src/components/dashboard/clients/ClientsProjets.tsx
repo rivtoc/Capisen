@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Check, ChevronDown, ChevronRight, Loader2, Plus, X } from "lucide-react";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface Client { id: string; full_name: string; company_name: string; }
 interface Projet {
@@ -124,16 +125,15 @@ const ClientsProjets = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-foreground">Client *</label>
-              <select
+              <CustomSelect
                 value={newProjet.client_id}
-                onChange={(e) => setNewProjet((p) => ({ ...p, client_id: e.target.value }))}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-foreground/10 transition"
-              >
-                <option value="">Sélectionner un client</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>{c.full_name}{c.company_name ? ` — ${c.company_name}` : ""}</option>
-                ))}
-              </select>
+                placeholder="Sélectionner un client"
+                options={clients.map((c) => ({
+                  value: c.id,
+                  label: c.full_name + (c.company_name ? ` — ${c.company_name}` : ""),
+                }))}
+                onChange={(v) => setNewProjet((p) => ({ ...p, client_id: v }))}
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-foreground">Titre *</label>
@@ -207,13 +207,11 @@ const ClientsProjets = () => {
                     <div className="grid grid-cols-2 gap-4 pt-4">
                       <div className="space-y-1.5">
                         <label className="text-xs font-medium text-muted-foreground">Statut</label>
-                        <select
+                        <CustomSelect
                           value={edit.statut}
-                          onChange={(e) => setEdits((p) => ({ ...p, [projet.id]: { ...p[projet.id], statut: e.target.value as Projet["statut"] } }))}
-                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-foreground/10 transition"
-                        >
-                          {STATUTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                        </select>
+                          options={STATUTS.map((s) => ({ value: s.value, label: s.label }))}
+                          onChange={(v) => setEdits((p) => ({ ...p, [projet.id]: { ...p[projet.id], statut: v as Projet["statut"] } }))}
+                        />
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-medium text-muted-foreground">Titre</label>

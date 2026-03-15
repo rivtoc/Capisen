@@ -6,6 +6,7 @@ import {
   Check, ChevronDown, Download, FileText, Loader2,
   Plus, Trash2, Upload, UserPlus, X,
 } from "lucide-react";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -326,15 +327,11 @@ const EtudesMissionsListe = () => {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-foreground">Statut</label>
-              <select
+              <CustomSelect
                 value={newForm.status}
-                onChange={(e) => setNewForm((p) => ({ ...p, status: e.target.value }))}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>{s.label}</option>
-                ))}
-              </select>
+                options={STATUS_OPTIONS}
+                onChange={(v) => setNewForm((p) => ({ ...p, status: v }))}
+              />
             </div>
           </div>
 
@@ -542,16 +539,15 @@ const EtudesMissionsListe = () => {
 
                         {addingIntervenant[m.id] ? (
                           <div className="flex items-center gap-2">
-                            <select
-                              value={selectedIntervenant[m.id] ?? ""}
-                              onChange={(e) => setSelectedIntervenant((p) => ({ ...p, [m.id]: e.target.value }))}
-                              className="text-xs border border-border rounded-lg px-2.5 py-1.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
-                            >
-                              <option value="">— Choisir —</option>
-                              {available.map((i) => (
-                                <option key={i.id} value={i.id}>{i.full_name}</option>
-                              ))}
-                            </select>
+                            <div className="w-44">
+                              <CustomSelect
+                                size="sm"
+                                value={selectedIntervenant[m.id] ?? ""}
+                                placeholder="— Choisir —"
+                                options={available.map((i) => ({ value: i.id, label: i.full_name }))}
+                                onChange={(v) => setSelectedIntervenant((p) => ({ ...p, [m.id]: v }))}
+                              />
+                            </div>
                             <button
                               onClick={() => handleAddIntervenant(m.id)}
                               disabled={!selectedIntervenant[m.id]}

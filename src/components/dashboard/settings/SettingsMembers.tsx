@@ -4,6 +4,7 @@ import { POLE_OPTIONS, MEMBER_ROLES, type PoleType, type MemberRole } from "@/li
 import { FEATURES, FEATURE_LABELS, type Feature } from "@/lib/permissions";
 import { field, btn } from "@/lib/ui-classes";
 import { Check, Loader2, Search } from "lucide-react";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 interface Member {
   id: string;
@@ -151,18 +152,18 @@ const SettingsMembers = () => {
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Chargement…</div>
       ) : (
-        <div className="bg-card border border-border rounded-2xl overflow-hidden overflow-x-auto">
+        <div className="bg-card border border-border rounded-2xl overflow-x-auto">
           <table className="w-full text-sm min-w-[860px]">
             <thead className="bg-muted/40 border-b border-border">
               <tr>
-                <th className="text-left px-5 py-3 font-medium text-foreground">Membre</th>
+                <th className="text-left px-5 py-3 font-medium text-foreground rounded-tl-2xl">Membre</th>
                 <th className="text-left px-5 py-3 font-medium text-foreground">Pôle</th>
                 <th className="text-left px-5 py-3 font-medium text-foreground">Rôle</th>
                 <th className="text-left px-5 py-3 font-medium text-foreground">
                   Accès supplémentaires
                   <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">(en plus du rôle)</span>
                 </th>
-                <th className="px-5 py-3 w-28"></th>
+                <th className="px-5 py-3 w-28 rounded-tr-2xl"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -196,32 +197,26 @@ const SettingsMembers = () => {
 
                       {/* Pôle */}
                       <td className="px-5 py-3">
-                        <select
-                          value={edit.pole}
-                          onChange={(e) => setEditField(member.id, "pole", e.target.value)}
-                          className="text-sm border border-border rounded-lg px-2.5 py-1.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 cursor-pointer"
-                        >
-                          {POLE_OPTIONS.map((p) => (
-                            <option key={p.value} value={p.value}>
-                              {p.label}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="w-36">
+                          <CustomSelect
+                            size="sm"
+                            value={edit.pole}
+                            options={POLE_OPTIONS}
+                            onChange={(v) => setEditField(member.id, "pole", v)}
+                          />
+                        </div>
                       </td>
 
                       {/* Rôle */}
                       <td className="px-5 py-3">
-                        <select
-                          value={edit.role}
-                          onChange={(e) => setEditField(member.id, "role", e.target.value)}
-                          className="text-sm border border-border rounded-lg px-2.5 py-1.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-ring/20 cursor-pointer"
-                        >
-                          {MEMBER_ROLES.map((r) => (
-                            <option key={r} value={r}>
-                              {ROLE_LABELS[r]}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="w-32">
+                          <CustomSelect
+                            size="sm"
+                            value={edit.role}
+                            options={MEMBER_ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))}
+                            onChange={(v) => setEditField(member.id, "role", v)}
+                          />
+                        </div>
                       </td>
 
                       {/* Permissions */}

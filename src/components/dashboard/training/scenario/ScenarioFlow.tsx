@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2, AlertTriangle, RotateCcw } from "lucide-react";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -152,15 +153,11 @@ export default function ScenarioFlow() {
           </p>
           <div className="space-y-1">
             <label className="text-xs font-medium text-foreground">Secteur d'activité</label>
-            <select
+            <CustomSelect
               value={sector}
-              onChange={(e) => setSector(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-border bg-muted/40 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/20"
-            >
-              {SECTORS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+              options={SECTORS.map((s) => ({ value: s, label: s }))}
+              onChange={setSector}
+            />
           </div>
           <Button onClick={generateBrief} disabled={loadingBrief} className="gap-2">
             {loadingBrief ? <Loader2 size={14} className="animate-spin" /> : <AlertTriangle size={14} />}
