@@ -140,7 +140,7 @@ export default function SimulationFlow() {
       // Create DB record
       let simulationId: string | null = null;
       if (profile) {
-        const { data: dbData } = await supabase
+        const { data: dbData, error: dbError } = await supabase
           .from("training_simulations")
           .insert({
             member_id: profile.id,
@@ -157,6 +157,7 @@ export default function SimulationFlow() {
           })
           .select("id")
           .single();
+        if (dbError) console.error("[SimulationFlow] Erreur insert DB:", dbError);
         simulationId = dbData?.id ?? null;
       }
 
