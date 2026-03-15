@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { TrainingSession } from "@/lib/training-types";
 
-const STORAGE_KEY = "capisen_training_session";
+export const STORAGE_KEY = "capisen_training_session";
 
 const defaultSession = (): TrainingSession => ({
   simulationId: null,
