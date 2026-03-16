@@ -47,26 +47,52 @@ export function registerTrainingRoutes(
 ) {
   // POST /api/training/generate-brief
   app.post('/api/training/generate-brief', async (req, res) => {
-    const { secteur, complexite } = req.body as { secteur: string; complexite: string };
+    const { offres, prestations, complexite } = req.body as {
+      offres: { titre: string; description: string | null }[];
+      prestations: { titre: string; description: string | null; offre: string }[];
+      complexite: string;
+    };
+
+    const offresLines = offres
+      .map((o) => `- "${o.titre}"${o.description ? ` : ${o.description}` : ''}`)
+      .join('\n');
+
+    const prestationsLines = prestations.length > 0
+      ? `\nPrestations ciblées :\n${prestations
+          .map((p) => `- "${p.titre}" (offre: ${p.offre})${p.description ? ` : ${p.description}` : ''}`)
+          .join('\n')}`
+      : '';
+
+    const secteurLabel = offres.map((o) => o.titre).join(' + ');
+    const prestationLabel = prestations.length > 0 ? prestations.map((p) => p.titre).join(' + ') : null;
+
+    const transversal = offres.length > 1
+      ? ' Le besoin est transversal : construis une problématique qui fait appel à ces plusieurs domaines.'
+      : '';
+
+    const systemPrompt =
+      `Tu es un simulateur pédagogique pour CAPISEN (Junior-Entreprise de l'ISEN Brest/Toulon). ` +
+      `CAPISEN propose des études dans les domaines suivants :\n${offresLines}${prestationsLines}\n` +
+      `Génère un brief client fictif réaliste et cohérent avec ces offres${prestations.length > 0 ? ' et prestations' : ''}.${transversal} ` +
+      `Difficulté : débutant=client coopératif/périmètre clair, intermédiaire=quelques ambiguïtés, expert=scope creep possible/client exigeant. ` +
+      `Réponds UNIQUEMENT en JSON valide.`;
+
     try {
       const completion = await openai.chat.completions.create({
         model: MODEL,
         response_format: { type: 'json_object' },
         messages: [
-          {
-            role: 'system',
-            content:
-              'Tu es un simulateur pédagogique pour CAPISEN (Junior-Entreprise de l\'ISEN Brest). Génère un brief client fictif réaliste. Réponds UNIQUEMENT en JSON valide. Difficulté : débutant=client coopératif/périmètre clair, intermédiaire=quelques ambiguïtés, expert=scope creep possible/client exigeant.',
-          },
+          { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Génère un brief client fictif pour le secteur "${secteur}" avec une difficulté "${complexite}". Réponds avec ce JSON exact :
+            content: `Génère un brief client fictif pour les offres CAPISEN "${secteurLabel}"${prestationLabel ? `, prestations "${prestationLabel}"` : ''}, difficulté "${complexite}". Réponds avec ce JSON exact :
 {
   "client": "Nom de l'entreprise fictive",
-  "secteur": "${secteur}",
+  "secteur": "${secteurLabel}",
+  "prestation": ${prestationLabel ? `"${prestationLabel}"` : 'null'},
   "contact": "Prénom Nom, Titre",
-  "contexte": "Description du contexte de l'entreprise",
-  "problematique": "Problème concret à résoudre",
+  "contexte": "Description du contexte de l'entreprise et pourquoi elle fait appel à CAPISEN",
+  "problematique": "Problème concret à résoudre, cohérent avec les offres sélectionnées",
   "cahier_des_charges": ["livrable 1", "livrable 2", "livrable 3"],
   "budget_jeh": 15,
   "duree_semaines": 8,
@@ -76,7 +102,7 @@ export function registerTrainingRoutes(
 }`,
           },
         ],
-        max_tokens: 800,
+        max_tokens: 900,
       });
       const brief = JSON.parse(completion.choices[0].message.content || '{}') as TrainingBrief;
       res.json(brief);

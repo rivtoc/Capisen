@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, AlertTriangle, Users, FlaskConical } from "lucide-react";
-import { CustomSelect } from "@/components/ui/CustomSelect";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -28,10 +27,12 @@ import type { PhaseNumber, PhaseEvaluation, ChatMessage, ClientMode } from "@/li
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:3001";
 
-const SECTORS = [
-  "Numérique & IT", "Industrie", "Santé", "Finance", "Commerce & Distribution",
-  "Agroalimentaire", "Énergie", "Transport & Logistique", "Conseil", "Éducation",
-];
+interface OffreItem {
+  id: string;
+  title: string;
+  description: string | null;
+  prestations: { id: string; title: string; description: string | null }[];
+}
 
 const PHASE_LABELS: Record<PhaseNumber, string> = {
   1: "Prise de contact",
@@ -49,7 +50,9 @@ export default function SimulationFlow() {
   const [flowState, setFlowState] = useState<FlowState>(
     session.brief ? (session.currentPhase === "summary" ? "summary" : "phase") : "setup"
   );
-  const [sector, setSector] = useState("Numérique & IT");
+  const [offres, setOffres] = useState<OffreItem[]>([]);
+  const [selectedOffreIds, setSelectedOffreIds] = useState<string[]>([]);
+  const [selectedPrestationIds, setSelectedPrestationIds] = useState<string[]>([]);
   const [complexite, setComplexite] = useState<"debutant" | "intermediaire" | "expert">("intermediaire");
   const [clientMode, setClientMode] = useState<ClientMode>("ai");
   const [memberNameInput, setMemberNameInput] = useState("");
@@ -59,6 +62,38 @@ export default function SimulationFlow() {
   const [loadingEval, setLoadingEval] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewingPhase, setViewingPhase] = useState<PhaseNumber | null>(null);
+
+  // Load offres + prestations from Supabase
+  useEffect(() => {
+    Promise.all([
+      supabase.from("offres_prestation").select("*").order("title"),
+      supabase.from("prestations").select("*").order("title"),
+    ]).then(([{ data: offresData }, { data: prestData }]) => {
+      const result: OffreItem[] = (offresData ?? []).map((o) => ({
+        ...o,
+        prestations: (prestData ?? []).filter((p) => p.offre_id === o.id),
+      }));
+      setOffres(result);
+    });
+  }, []);
+
+  const toggleOffre = (id: string) => {
+    setSelectedOffreIds((prev) => {
+      if (prev.includes(id)) {
+        // Désélectionner l'offre + retirer ses prestations
+        const offrePrestIds = offres.find((o) => o.id === id)?.prestations.map((p) => p.id) ?? [];
+        setSelectedPrestationIds((pp) => pp.filter((pid) => !offrePrestIds.includes(pid)));
+        return prev.filter((oid) => oid !== id);
+      }
+      return [...prev, id];
+    });
+  };
+
+  const togglePrestation = (id: string) => {
+    setSelectedPrestationIds((prev) =>
+      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
+    );
+  };
 
   // Load in-progress simulation from DB on mount (if no brief in local session)
   useEffect(() => {
@@ -111,6 +146,15 @@ export default function SimulationFlow() {
   }
 
   const generateBrief = async () => {
+    if (selectedOffreIds.length === 0) { setError("Veuillez sélectionner au moins une offre."); return; }
+
+    const offresSelected = offres.filter((o) => selectedOffreIds.includes(o.id));
+    const allPrestations = offresSelected.flatMap((o) =>
+      o.prestations
+        .filter((p) => selectedPrestationIds.includes(p.id))
+        .map((p) => ({ titre: p.title, description: p.description, offre: o.title }))
+    );
+
     setLoadingBrief(true);
     setFlowState("generating");
     setError(null);
@@ -118,7 +162,11 @@ export default function SimulationFlow() {
       const res = await fetch(`${SERVER_URL}/api/training/generate-brief`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ secteur: sector, complexite }),
+        body: JSON.stringify({
+          offres: offresSelected.map((o) => ({ titre: o.title, description: o.description })),
+          prestations: allPrestations,
+          complexite,
+        }),
       });
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       const brief = await res.json();
@@ -341,15 +389,77 @@ export default function SimulationFlow() {
               <p className="text-sm font-semibold text-foreground">Paramètres de la simulation</p>
             </div>
 
-            {/* Sector */}
+            {/* Offres — multi-sélection */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-foreground">Secteur d'activité</label>
-              <CustomSelect
-                value={sector}
-                options={SECTORS.map((s) => ({ value: s, label: s }))}
-                onChange={setSector}
-              />
+              <label className="text-xs font-medium text-foreground">
+                Offres CAPISEN{" "}
+                <span className="text-muted-foreground font-normal">(plusieurs possibles)</span>
+              </label>
+              {offres.length === 0 ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 size={12} className="animate-spin" /> Chargement des offres…
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {offres.map((o) => {
+                    const selected = selectedOffreIds.includes(o.id);
+                    return (
+                      <button
+                        key={o.id}
+                        onClick={() => toggleOffre(o.id)}
+                        className={`px-3 py-2.5 rounded-lg border text-xs font-medium text-left transition-colors ${
+                          selected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-card border-border text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                        }`}
+                      >
+                        <div className="font-semibold leading-tight">{o.title}</div>
+                        {o.description && (
+                          <div className="text-[11px] opacity-70 mt-0.5 line-clamp-1">{o.description}</div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+
+            {/* Prestations — issues de toutes les offres sélectionnées */}
+            {selectedOffreIds.length > 0 &&
+              offres.filter((o) => selectedOffreIds.includes(o.id)).some((o) => o.prestations.length > 0) && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-foreground">
+                  Prestations <span className="text-muted-foreground font-normal">(optionnel, plusieurs possibles)</span>
+                </label>
+                {offres
+                  .filter((o) => selectedOffreIds.includes(o.id) && o.prestations.length > 0)
+                  .map((o) => (
+                    <div key={o.id} className="space-y-1.5">
+                      <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">
+                        {o.title}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {o.prestations.map((p) => {
+                          const selected = selectedPrestationIds.includes(p.id);
+                          return (
+                            <button
+                              key={p.id}
+                              onClick={() => togglePrestation(p.id)}
+                              className={`px-3 py-1.5 rounded-lg border text-xs transition-colors ${
+                                selected
+                                  ? "bg-primary/15 border-primary text-primary font-medium"
+                                  : "bg-card border-border text-muted-foreground hover:bg-muted/40"
+                              }`}
+                            >
+                              {p.title}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
 
             {/* Difficulty */}
             <div className="space-y-1.5">

@@ -10,7 +10,8 @@ export type CrisisType =
 
 export interface TrainingBrief {
   client: string;
-  secteur: string;
+  secteur: string;       // titre de l'offre
+  prestation?: string;   // titre de la prestation (optionnel)
   contact: string;
   contexte: string;
   problematique: string;
