@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, AlertTriangle, Users, FlaskConical } from "lucide-react";
+import { Loader2, AlertTriangle, Users, FlaskConical, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,7 @@ export default function SimulationFlow() {
   const [loadingEval, setLoadingEval] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewingPhase, setViewingPhase] = useState<PhaseNumber | null>(null);
+  const [briefExpanded, setBriefExpanded] = useState(false);
 
   // Load offres + prestations from Supabase
   useEffect(() => {
@@ -548,10 +549,127 @@ export default function SimulationFlow() {
             className="space-y-4"
           >
             {/* Brief context */}
-            <div className="rounded-xl border border-border bg-card p-4">
-              <p className="text-xs text-muted-foreground mb-1">Brief — {session.brief.client}</p>
-              <p className="text-sm text-foreground font-medium">{session.brief.contact}</p>
-              <p className="text-xs text-muted-foreground">{session.brief.problematique}</p>
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              {/* En-tête cliquable */}
+              <button
+                onClick={() => setBriefExpanded((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors text-left"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Brief client</span>
+                    {session.brief.prestation && (
+                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        {session.brief.prestation}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold text-foreground truncate">{session.brief.client}</p>
+                  <p className="text-xs text-muted-foreground">{session.brief.contact}</p>
+                </div>
+                {briefExpanded ? <ChevronUp size={14} className="text-muted-foreground shrink-0 ml-2" /> : <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-2" />}
+              </button>
+
+              {/* Contenu détaillé */}
+              {briefExpanded && (
+                <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
+                  {/* Contexte */}
+                  <div>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Contexte</p>
+                    <p className="text-xs text-foreground leading-relaxed">{session.brief.contexte}</p>
+                  </div>
+
+                  {/* Problématique */}
+                  <div>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Problématique</p>
+                    <p className="text-xs text-foreground leading-relaxed">{session.brief.problematique}</p>
+                  </div>
+
+                  {/* Objectifs */}
+                  {session.brief.objectifs?.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Objectifs</p>
+                      <ul className="space-y-0.5">
+                        {session.brief.objectifs.map((o, i) => (
+                          <li key={i} className="text-xs text-foreground flex gap-1.5">
+                            <span className="text-primary mt-0.5 shrink-0">•</span>{o}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Cahier des charges */}
+                  <div>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Livrables attendus</p>
+                    <ul className="space-y-0.5">
+                      {session.brief.cahier_des_charges.map((l, i) => (
+                        <li key={i} className="text-xs text-foreground flex gap-1.5">
+                          <span className="text-primary mt-0.5 shrink-0">•</span>{l}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Contraintes + ressources */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {session.brief.contraintes?.length > 0 && (
+                      <div>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Contraintes</p>
+                        <ul className="space-y-0.5">
+                          {session.brief.contraintes.map((c, i) => (
+                            <li key={i} className="text-xs text-foreground flex gap-1.5">
+                              <span className="text-amber-500 mt-0.5 shrink-0">⚠</span>{c}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {session.brief.criteres_succes?.length > 0 && (
+                      <div>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Critères de succès</p>
+                        <ul className="space-y-0.5">
+                          {session.brief.criteres_succes.map((c, i) => (
+                            <li key={i} className="text-xs text-foreground flex gap-1.5">
+                              <span className="text-green-500 mt-0.5 shrink-0">✓</span>{c}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  {session.brief.ressources_client && (
+                    <div>
+                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide mb-1">Ressources client</p>
+                      <p className="text-xs text-foreground leading-relaxed">{session.brief.ressources_client}</p>
+                    </div>
+                  )}
+
+                  {/* Budget / Durée */}
+                  <div className="flex gap-4 pt-1 border-t border-border">
+                    <div>
+                      <p className="text-[11px] text-muted-foreground">Budget</p>
+                      <p className="text-xs font-semibold text-foreground">{session.brief.budget_jeh} JEH</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-muted-foreground">Durée</p>
+                      <p className="text-xs font-semibold text-foreground">{session.brief.duree_semaines} semaines</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-muted-foreground">Livrable</p>
+                      <p className="text-xs font-semibold text-foreground capitalize">{session.brief.type_livrable}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Résumé compact quand fermé */}
+              {!briefExpanded && (
+                <div className="px-4 pb-3">
+                  <p className="text-xs text-muted-foreground line-clamp-2">{session.brief.problematique}</p>
+                </div>
+              )}
             </div>
 
             {/* Show evaluation or phase */}

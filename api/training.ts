@@ -27,17 +27,35 @@ const PHASE_CONTEXT: Record<PhaseNumber, string> = {
 };
 
 function briefToText(brief: TrainingBrief): string {
-  return `
-Client : ${brief.client} (${brief.secteur})
-Contact : ${brief.contact}
-Contexte : ${brief.contexte}
-Problématique : ${brief.problematique}
-Cahier des charges : ${brief.cahier_des_charges.join(', ')}
-Budget : ${brief.budget_jeh} JEH
-Durée : ${brief.duree_semaines} semaines
-Type de livrable : ${brief.type_livrable}
-Complexité : ${brief.complexite}
-`.trim();
+  const lines: string[] = [
+    `Client : ${brief.client} (${brief.secteur})`,
+    brief.prestation ? `Prestation : ${brief.prestation}` : '',
+    `Contact : ${brief.contact}`,
+    ``,
+    `Contexte : ${brief.contexte}`,
+    ``,
+    `Problématique : ${brief.problematique}`,
+    ``,
+    `Objectifs :`,
+    ...(brief.objectifs ?? []).map((o) => `  - ${o}`),
+    ``,
+    `Cahier des charges :`,
+    ...brief.cahier_des_charges.map((c) => `  - ${c}`),
+    ``,
+    `Contraintes :`,
+    ...(brief.contraintes ?? []).map((c) => `  - ${c}`),
+    ``,
+    `Ressources mises à disposition par le client : ${brief.ressources_client ?? 'N/A'}`,
+    ``,
+    `Critères de succès :`,
+    ...(brief.criteres_succes ?? []).map((c) => `  - ${c}`),
+    ``,
+    `Budget : ${brief.budget_jeh} JEH`,
+    `Durée : ${brief.duree_semaines} semaines`,
+    `Type de livrable : ${brief.type_livrable}`,
+    `Complexité : ${brief.complexite}`,
+  ];
+  return lines.filter((l) => l !== null && l !== undefined).join('\n').trim();
 }
 
 export function registerTrainingRoutes(
@@ -85,24 +103,54 @@ export function registerTrainingRoutes(
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Génère un brief client fictif pour les offres CAPISEN "${secteurLabel}"${prestationLabel ? `, prestations "${prestationLabel}"` : ''}, difficulté "${complexite}". Réponds avec ce JSON exact :
+            content: `Génère un brief client COMPLET et DÉTAILLÉ pour les offres CAPISEN "${secteurLabel}"${prestationLabel ? `, prestations "${prestationLabel}"` : ''}, difficulté "${complexite}".
+
+IMPORTANT : chaque champ doit être riche et précis, comme un vrai brief client en Junior-Entreprise. Pas de phrases génériques ou d'une seule ligne.
+
+Réponds avec ce JSON exact (respecte strictement les types) :
 {
-  "client": "Nom de l'entreprise fictive",
+  "client": "Nom réaliste d'une entreprise fictive (PME, startup ou grand groupe selon contexte)",
   "secteur": "${secteurLabel}",
   "prestation": ${prestationLabel ? `"${prestationLabel}"` : 'null'},
-  "contact": "Prénom Nom, Titre",
-  "contexte": "Description du contexte de l'entreprise et pourquoi elle fait appel à CAPISEN",
-  "problematique": "Problème concret à résoudre, cohérent avec les offres sélectionnées",
-  "cahier_des_charges": ["livrable 1", "livrable 2", "livrable 3"],
-  "budget_jeh": 15,
-  "duree_semaines": 8,
+  "contact": "Prénom Nom, Titre précis (ex: Responsable Marketing Digital, CTO, DG)",
+  "contexte": "3 à 5 phrases décrivant l'entreprise : son activité, sa taille, son marché, sa situation actuelle, et pourquoi elle fait appel à une Junior-Entreprise maintenant",
+  "problematique": "2 à 3 phrases expliquant le problème concret, ses causes, et pourquoi il est urgent ou stratégique pour le client",
+  "objectifs": [
+    "Objectif précis 1 (ex: Augmenter le taux de conversion de 15% en 6 mois)",
+    "Objectif précis 2",
+    "Objectif précis 3",
+    "Objectif précis 4 (optionnel)"
+  ],
+  "cahier_des_charges": [
+    "Livrable 1 détaillé (ex: Audit complet de la stratégie SEO actuelle avec recommandations priorisées)",
+    "Livrable 2 détaillé",
+    "Livrable 3 détaillé",
+    "Livrable 4 détaillé (optionnel)"
+  ],
+  "contraintes": [
+    "Contrainte 1 (ex: Budget limité à 20 JEH, impossible d'augmenter)",
+    "Contrainte 2 (ex: Délai impératif : présentation au CA le 15 mars)",
+    "Contrainte 3 (ex: Accès aux données restreint, accord DPO nécessaire)",
+    "Contrainte 4 (optionnel)"
+  ],
+  "ressources_client": "Ce que le client met à disposition : accès aux outils, interlocuteurs disponibles, données existantes, documentations, etc. (2-3 phrases)",
+  "criteres_succes": [
+    "Critère mesurable 1 (ex: Dashboard opérationnel et validé par l'équipe technique)",
+    "Critère mesurable 2",
+    "Critère mesurable 3"
+  ],
+  "budget_jeh": 18,
+  "duree_semaines": 10,
   "type_livrable": "informatique",
   "complexite": "${complexite}",
-  "pieges": ["piège ou difficulté potentielle 1", "piège ou difficulté potentielle 2"]
+  "pieges": [
+    "Piège ou difficulté cachée 1 que le Suiveur devra gérer (ex: client qui élargit le scope en cours de mission)",
+    "Piège ou difficulté cachée 2"
+  ]
 }`,
           },
         ],
-        max_tokens: 900,
+        max_tokens: 2000,
       });
       const brief = JSON.parse(completion.choices[0].message.content || '{}') as TrainingBrief;
       res.json(brief);

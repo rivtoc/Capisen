@@ -10,12 +10,16 @@ export type CrisisType =
 
 export interface TrainingBrief {
   client: string;
-  secteur: string;       // titre de l'offre
-  prestation?: string;   // titre de la prestation (optionnel)
+  secteur: string;
+  prestation?: string;
   contact: string;
-  contexte: string;
-  problematique: string;
+  contexte: string;           // contexte détaillé de l'entreprise (3-5 phrases)
+  problematique: string;      // problème concret (2-3 phrases)
+  objectifs?: string[];        // objectifs spécifiques attendus (3-5 items)
   cahier_des_charges: string[];
+  contraintes?: string[];      // contraintes techniques/budget/délai/org
+  ressources_client?: string;  // ce que le client met à disposition
+  criteres_succes?: string[];  // comment le client évaluera la réussite
   budget_jeh: number;
   duree_semaines: number;
   type_livrable: "informatique" | "papier";
